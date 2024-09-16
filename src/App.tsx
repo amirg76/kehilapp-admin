@@ -1,5 +1,10 @@
 import Home from "./pages/home/Home";
-import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+  Navigate,
+} from "react-router-dom";
 import Users from "./pages/users/Users";
 import Products from "./pages/products/Products";
 import Navbar from "./components/navbar/Navbar";
@@ -9,15 +14,22 @@ import Login from "./pages/login/Login";
 import "./styles/global.scss";
 import User from "./pages/user/User";
 import Product from "./pages/product/Product";
-import {
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
-
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { authActions } from "@store/slices/authSlice";
 
 const queryClient = new QueryClient();
 
-function App() {
+const useAuth = () => {
+  const user = sessionStorage.getItem("loggedInUser");
+
+  return user ? true : false;
+};
+const App = () => {
+  useEffect(() => {
+    useAuth();
+  }, []);
   const Layout = () => {
     return (
       <div className="main">
@@ -40,7 +52,7 @@ function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <Layout />,
+      element: !useAuth() ? <Navigate to="/login" replace /> : <Layout />,
       children: [
         {
           path: "/",
@@ -71,6 +83,6 @@ function App() {
   ]);
 
   return <RouterProvider router={router} />;
-}
+};
 
 export default App;
