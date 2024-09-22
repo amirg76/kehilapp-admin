@@ -27,7 +27,7 @@ a {
   padding: 5px 20px;
   border-right: 2px solid $soft-bg;
 
-  @include lg{
+  @include lg {
     width: max-content;
   }
 }
@@ -35,4 +35,7 @@ a {
 .contentContainer {
   padding: 5px 20px;
   width: 100%;
+}
+.rtl {
+  direction: rtl;
 }

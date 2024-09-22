@@ -1,0 +1,4 @@
+@import "../../styles/utils.scss";
+.flex-container {
+  @include flex-container;
+}
