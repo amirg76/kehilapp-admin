@@ -17,6 +17,7 @@ import useButtonDisabled from "../../hooks/useButtonDisabled";
 import { handleSuccess } from "../../helpers/authSuccess";
 import { updateErrorMessage } from "../../helpers/authErrors";
 import "./authForm.scss";
+import { useDispatch } from "react-redux";
 // Define the structure of the data returned by your mutation
 interface SuccessData {
   id: string;
@@ -28,7 +29,7 @@ interface SuccessData {
 }
 
 const AuthForm = ({ type }: { type: string }) => {
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [userCredentials, setUserCredentials] = useState({
     email: "",
@@ -74,12 +75,12 @@ const AuthForm = ({ type }: { type: string }) => {
       handleSuccess({
         data: data as { error?: { status: number } },
         setErrorMessage,
-
+        dispatch,
         navigate,
         type,
       });
     },
-    [navigate, type, setErrorMessage]
+    [dispatch, navigate, type, setErrorMessage]
   );
 
   const {
@@ -108,50 +109,6 @@ const AuthForm = ({ type }: { type: string }) => {
 
   return (
     <>
-      {/* <div className="flex flex-col justify-center items-center h-[100vh] md:w-1/2">
-        <img className="w-[11em] mb-2" src={logoKisufim} alt="Your Company" />
-        <form
-          className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-lg"
-          // onSubmit={handleSubmit}
-        >
-          <h1 className="mb-3">{formTitle}</h1>
-          <h2 className="text-xl font-bold mb-6">{formSubtitle}</h2>
-
-          <InputCmp
-            label="אימייל"
-            name="email"
-            value={userCredentials.email}
-            onChange={handleChange}
-            onBlur={validateForm}
-            inputStyle="py-3"
-            containerstyle="flex flex-col"
-            labelStyle="relative w-fit bg-white top-[10px] right-[10px] px-2"
-          />
-          <ErrorMessage msg={error.email} style="h-[20px]  mr-3" />
-          <InputCmp
-            label="סיסמא"
-            type="password"
-            name="password"
-            value={userCredentials.password}
-            onChange={handleChange}
-            onBlur={validateForm}
-            inputStyle="py-3"
-            containerstyle="flex flex-col"
-            labelStyle="relative w-fit bg-white top-[10px] right-[10px] px-2"
-          />
-          <ErrorMessage msg={error.password} style="h-[20px] mb-6 mr-3" />
-          <ErrorMessage
-            msg={isLoading ? "" : errorMessage}
-            style="h-[25px] mr-3 text-center"
-          />
-          <ButtonCmp
-            label={isLoading ? <Spinner style="w-6 h-6" /> : buttonLabel}
-            isDisabled={isButtonDisabled}
-            onClick={handleSubmit}
-            style="w-full py-3 h-[52px]"
-          />
-        </form>
-      </div> */}
       <div className="login-flex-container">
         <img className="w-11 mb-05" src={logoKisufim} alt="Your Company" />
         <form className="form-container rtl">
