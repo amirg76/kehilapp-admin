@@ -44,37 +44,67 @@ const App = () => {
       </div>
     );
   };
+  // Protected route component
+  const ProtectedRoute = () => {
+    const isAuthenticated = useAuth();
+
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+
+    return <Outlet />;
+  };
+  // Login route component
+  const LoginRoute = () => {
+    const isAuthenticated = useAuth();
+
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    return <Login />;
+  };
 
   const router = createBrowserRouter([
     {
       path: "/",
-      element: !useAuth() ? <Navigate to="/login" replace /> : <Layout />,
+      // element: !useAuth() && <Navigate to="/login" replace />,
+      element: <ProtectedRoute />,
       children: [
         {
           path: "/",
-          element: <Home />,
+          element: <Navigate to="/dashboard" replace />,
         },
         {
-          path: "/users",
-          element: <Users />,
-        },
-        {
-          path: "/products",
-          element: <Products />,
-        },
-        {
-          path: "/users/:id",
-          element: <User />,
-        },
-        {
-          path: "/products/:id",
-          element: <Product />,
+          element: <Layout />,
+          children: [
+            {
+              path: "dashboard",
+              element: <Home />,
+            },
+            {
+              path: "users",
+              element: <Users />,
+            },
+            {
+              path: "users/:id",
+              element: <User />,
+            },
+            {
+              path: "products",
+              element: <Products />,
+            },
+            {
+              path: "products/:id",
+              element: <Product />,
+            },
+          ],
         },
       ],
     },
     {
       path: "/login",
-      element: <Login />,
+      element: <LoginRoute />,
     },
   ]);
 
