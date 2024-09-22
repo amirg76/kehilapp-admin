@@ -1,0 +1,12 @@
+@mixin flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-image: linear-gradient(to bottom, #efefef, #ffffff);
+  & > * {
+    flex: 1;
+  }
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}

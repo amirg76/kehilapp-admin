@@ -1,0 +1,91 @@
+$sans: "Assistant", sans-serif;
+$zen: "Zen Kaku Gothic Antique";
+.login-flex-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+
+  font-family: $sans;
+  @media (min-width: 768px) {
+    width: 50%;
+  }
+}
+
+.form-container {
+  width: 100%;
+  max-width: 28rem;
+  padding: 2.5rem;
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.2);
+}
+
+.form-header {
+  margin-bottom: 1rem;
+}
+
+.form-title {
+  font-size: 1rem;
+  font-weight: 100;
+  color: gray;
+  margin-bottom: 1.1rem;
+}
+
+.form-subtitle {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-field {
+  padding: 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.input-label {
+  position: relative;
+  width: fit-content;
+  background-color: #ffffff;
+  top: 10px;
+  right: 10px;
+  padding: 0 0.5rem;
+}
+
+.error-message {
+  height: 1.5rem;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+}
+
+.button-container {
+  width: 100%;
+  padding: 0.75rem 0 0.75rem;
+  height: 52px;
+  cursor: pointer;
+}
+
+.button-label {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.w-11 {
+  width: 11em;
+}
+
+.mb-05 {
+  margin-bottom: 0.5rem;
+}

@@ -1,0 +1,10 @@
+.inputCmp-container {
+  border: 1px solid #ccc; // assuming border-gray-300 is a gray color with hex code #ccc
+  padding: 1rem 0.75rem; // equivalent to px-3 py-2
+  border-radius: 0.375rem; // equivalent to rounded-md
+  font-size: 100%;
+  &:focus {
+    outline: none;
+    border-color: #3498db; // assuming primary-700 is a blue color with hex code #3498db
+  }
+}

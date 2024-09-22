@@ -14,12 +14,10 @@ import Login from "./pages/login/Login";
 import "./styles/global.scss";
 import User from "./pages/user/User";
 import Product from "./pages/product/Product";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { authActions } from "@store/slices/authSlice";
 
-const queryClient = new QueryClient();
+import { useEffect } from "react";
+
+import { authActions } from "@store/slices/authSlice";
 
 const useAuth = () => {
   const user = sessionStorage.getItem("loggedInUser");
@@ -39,9 +37,7 @@ const App = () => {
             <Menu />
           </div>
           <div className="contentContainer">
-            <QueryClientProvider client={queryClient}>
-              <Outlet />
-            </QueryClientProvider>
+            <Outlet />
           </div>
         </div>
         <Footer />
