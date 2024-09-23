@@ -22,6 +22,15 @@ const Navbar = () => {
           />
           <span>Jane</span>
         </div>
+        <img
+          src="/logout.svg"
+          alt=""
+          className="icon"
+          onClick={() => {
+            sessionStorage.removeItem("loggedInUser");
+            window.location.href = "/login";
+          }}
+        />
         <img src="/settings.svg" alt="" className="icon" />
       </div>
     </div>
