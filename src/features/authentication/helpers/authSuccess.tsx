@@ -24,6 +24,7 @@ export const handleSuccess = ({
   type,
 }: AuthSuccessProps) => {
   const status = data?.error?.status;
+  console.log(status);
 
   const handleAuthError = (status: number) => {
     updateErrorMessage(status, setErrorMessage);
@@ -36,7 +37,7 @@ export const handleSuccess = ({
     navigate(DASHBOARD);
   };
 
-  if (status === 404 || status === 401 || status === 409) {
+  if (status === 404 || status === 401 || status === 409 || status === 403) {
     handleAuthError(status);
   } else {
     handleNormalResponse();
