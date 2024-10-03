@@ -1,36 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import logoKisufim from "../img/logo-kibbuttz-transpert.png";
 import InputCmp from "@/components/form/InputCmp";
 import ButtonCmp from "@/components/form/ButtonCmp";
 import ErrorMessage from "@/components/ui/ErrorMessage";
-import { LOGIN_URL, REGISTER_URL } from "@api/apiConstants";
-import { httpService } from "@services/httpService";
-import { useMutation } from "react-query";
+
 import Spinner from "@/components/ui/Spinner/Spinner";
 
 import validateEmail from "../../hooks/validateEmail";
 import validatePassword from "../../hooks/validatePassword";
 import useButtonDisabled from "../../hooks/useButtonDisabled";
 
-import { handleSuccess } from "../../helpers/authSuccess";
-import { updateErrorMessage } from "../../helpers/authErrors";
 import "./authForm.scss";
-import { useDispatch } from "react-redux";
-// Define the structure of the data returned by your mutation
-interface SuccessData {
-  id: string;
-  token: string;
-  user: {
-    name: string;
-    email: string;
-  };
-}
 
-const AuthForm = ({ type }: { type: string }) => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+import { useLogin } from "../../helpers/useLogin";
+// Define the structure of the data returned by your mutation
+
+const AuthForm = () => {
   const [userCredentials, setUserCredentials] = useState({
     email: "",
     password: "",
@@ -67,45 +53,13 @@ const AuthForm = ({ type }: { type: string }) => {
 
   const handleSubmit = (ev: React.MouseEvent<HTMLButtonElement>) => {
     ev.preventDefault();
-    mutate();
+    handleLogin(userCredentials);
   };
 
-  const handleSuccessCallback = useCallback(
-    (data: SuccessData) => {
-      handleSuccess({
-        data: data as { error?: { status: number } },
-        setErrorMessage,
-        dispatch,
-        navigate,
-        type,
-      });
-    },
-    [dispatch, navigate, type, setErrorMessage]
-  );
-
-  const {
-    mutate,
-    isLoading,
-    isError,
-    error: authError,
-  } = useMutation({
-    mutationFn: () =>
-      httpService.post(
-        type === "register" ? REGISTER_URL : LOGIN_URL,
-        userCredentials
-      ),
-    onSuccess: (data: SuccessData) => handleSuccessCallback(data),
-    onError: (err) => {
-      console.log(err);
-
-      updateErrorMessage(err, setErrorMessage);
-    },
-  });
-
-  const formTitle = type === "register" ? "הרשמה לאתר" : "כניסה לאתר";
-  const formSubtitle =
-    type === "register" ? "פתיחת חשבון חדש" : "התחבר לחשבון שלך";
-  const buttonLabel = type === "register" ? "תרשמו אותי" : "כניסה";
+  const { handleLogin, isLoading } = useLogin(setErrorMessage);
+  const formTitle = "כניסה לאתר";
+  const formSubtitle = "התחבר לחשבון שלך";
+  const buttonLabel = "כניסה";
 
   return (
     <>
