@@ -1,12 +1,12 @@
 import { GridColDef } from "@mui/x-data-grid";
 import DataTable from "../../components/dataTable/DataTable";
 import "./Users.scss";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Add from "../../components/add/Add";
 import { userRows } from "../../data";
 import { uploadExcelFile } from "@/features/authentication/helpers/uploadExcelFile";
 import { sentFileSuccess } from "@/features/authentication/helpers/sentFileSuccess";
-
+import { getUsersFromDb } from "@/features/authentication/helpers/getUsersFromDb";
 const columns: GridColDef[] = [
   { field: "id", headerName: "ID", width: 90 },
   {
@@ -58,15 +58,12 @@ const columns: GridColDef[] = [
 const Users = () => {
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState("");
-  // TEST THE API
+  // const [users, setUsers] = useState<any[]>([]); // Adjust the type as needed
+  const { handleGetUsers, users } = getUsersFromDb();
+  useEffect(() => {
+    handleGetUsers();
+  }, []);
 
-  // const { isLoading, data } = useQuery({
-  //   queryKey: ["allusers"],
-  //   queryFn: () =>
-  //     fetch("http://localhost:8800/api/users").then(
-  //       (res) => res.json()
-  //     ),
-  // });
   const { handleSentFile } = sentFileSuccess();
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -81,16 +78,6 @@ const Users = () => {
       formData.append("file", file as Blob);
 
       handleSentFile(formData);
-      // Trigger mutation to post file
-      // const handleSuccessCallback = useSuccessCallback(
-      //   setFileError,
-      //   dispatch,
-      //   navigate,
-      //   url
-      // );
-
-      // .then((data) => console.log("File upload successful", data))
-      // .catch((error) => setFileError(error.message));
     } catch (error: any) {
       console.log(error);
 
