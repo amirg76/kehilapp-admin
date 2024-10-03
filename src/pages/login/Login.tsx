@@ -8,7 +8,7 @@ const Login: React.FC = () => {
   return (
     <>
       <div className="flex-container rtl">
-        <AuthForm type="login" />
+        <AuthForm />
         <LoginRegisterImage img={leftImg} />
       </div>
     </>

@@ -1,10 +1,17 @@
 import { api } from "@/lib/axios";
 import { LOGIN_URL } from "@/api/apiConstants";
+import { handleHttpServiceErrors } from "./handleHttpServiceErrors";
 // var axios = Axios.create({
 //   withCredentials: true,
 // });
-
-export const httpService = {
+interface HttpService {
+  get(endpoint: string, data: any): Promise<any>;
+  post(endpoint: string, data: any): Promise<any>;
+  put(endpoint: string, data: any): Promise<any>;
+  delete(endpoint: string, data: any): Promise<any>;
+  [key: string]: (endpoint: string, data: any) => Promise<any>;
+}
+export const httpService: HttpService = {
   get(endpoint, data) {
     return ajax(endpoint, "GET", data);
   },
@@ -19,14 +26,20 @@ export const httpService = {
   },
 };
 
-async function ajax(endpoint, method = "GET", data = null) {
+async function ajax(endpoint: string, method = "GET", data = null) {
   const headers = {
     Authorization: "",
   };
-  const loggedInUser = localStorage.getItem("loggedInUser");
+  const loggedInUser = sessionStorage.getItem("loggedInUser");
 
   if (endpoint !== LOGIN_URL && method === "POST") {
-    headers.Authorization = `Bearer ${loggedInUser}`;
+    if (loggedInUser) {
+      const userData = JSON.parse(loggedInUser);
+
+      headers.Authorization = `Bearer ${userData.data.token}`;
+    }
+
+    // headers.Authorization = `Bearer ${loggedInUser}`;
   }
 
   try {
@@ -40,10 +53,6 @@ async function ajax(endpoint, method = "GET", data = null) {
 
     return res.data;
   } catch (err) {
-    return {
-      isError: true,
-      status: err.error.status,
-      message: err.error.message,
-    };
+    return handleHttpServiceErrors(err);
   }
 }
