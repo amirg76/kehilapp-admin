@@ -1,5 +1,7 @@
 import { GridColDef } from "@mui/x-data-grid";
 import "./add.scss";
+import { sentNewUser } from "@/helpers/sentNewUser";
+import { useState } from "react";
 // import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type Props = {
@@ -9,7 +11,15 @@ type Props = {
 };
 
 const Add = (props: Props) => {
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const { handleSentNewUser } = sentNewUser();
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
   // TEST THE API
 
   // const queryClient = useQueryClient();
@@ -43,8 +53,8 @@ const Add = (props: Props) => {
     e.preventDefault();
 
     //add new item
-    // mutation.mutate();
-    props.setOpen(false)
+    handleSentNewUser(formData);
+    props.setOpen(false);
   };
   return (
     <div className="add">
@@ -57,9 +67,15 @@ const Add = (props: Props) => {
           {props.columns
             .filter((item) => item.field !== "id" && item.field !== "img")
             .map((column) => (
-              <div className="item">
+              <div className="item" key={column.field}>
                 <label>{column.headerName}</label>
-                <input type={column.type} placeholder={column.field} />
+                <input
+                  type={column.type === "number" ? "number" : "text"}
+                  placeholder={column.field}
+                  name={column.field}
+                  value={formData[column.field] || ""}
+                  onChange={handleChange}
+                />
               </div>
             ))}
           <button>Send</button>
