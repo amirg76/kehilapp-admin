@@ -6,15 +6,20 @@ import { columns } from "../../data";
 import { uploadExcelFile } from "@/features/authentication/helpers/uploadExcelFile";
 import { sentFileSuccess } from "@/features/authentication/helpers/sentFileSuccess";
 import { getUsersFromDb } from "@/features/authentication/helpers/getUsersFromDb";
+import { addIdSequence } from "@/helpers/addIdSequence";
 
 const Users = () => {
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState("");
   // const [users, setUsers] = useState<any[]>([]); // Adjust the type as needed
+  const [usersWithIds, setUsersWithIds] = useState<any[]>([]);
   const { handleGetUsers, users } = getUsersFromDb();
   useEffect(() => {
     handleGetUsers();
   }, []);
+  useEffect(() => {
+    setUsersWithIds(addIdSequence(users));
+  }, [users]);
 
   const { handleSentFile } = sentFileSuccess();
 
@@ -44,8 +49,10 @@ const Users = () => {
         <button onClick={() => setOpen(true)}>Add New User</button>
         <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
         {fileError && <p style={{ color: "red" }}>{fileError}</p>}
+        {usersWithIds && console.log(usersWithIds)}
       </div>
-      <DataTable slug="users" columns={columns} rows={users} />
+
+      <DataTable slug="users" columns={columns} rows={usersWithIds} />
       {/* TEST THE API */}
 
       {/* {isLoading ? (
