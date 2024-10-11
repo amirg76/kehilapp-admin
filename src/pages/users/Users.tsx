@@ -49,7 +49,6 @@ const Users = () => {
         <button onClick={() => setOpen(true)}>Add New User</button>
         <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
         {fileError && <p style={{ color: "red" }}>{fileError}</p>}
-        {usersWithIds && console.log(usersWithIds)}
       </div>
 
       <DataTable slug="users" columns={columns} rows={usersWithIds} />
