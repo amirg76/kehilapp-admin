@@ -1,27 +1,27 @@
 import DataTable from "../../components/dataTable/DataTable";
 import "./Users.scss";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Add from "../../components/add/Add";
 import { columns } from "../../data";
 import { uploadExcelFile } from "@/features/authentication/helpers/uploadExcelFile";
 import { sentFileSuccess } from "@/features/authentication/helpers/sentFileSuccess";
 import { getUsersFromDb } from "@/features/authentication/helpers/getUsersFromDb";
 import { addIdSequence } from "@/helpers/addIdSequence";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/index";
 
 const Users = () => {
+  const usersData = useSelector((state: RootState) => state.users.usersData);
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState("");
-  // const [users, setUsers] = useState<any[]>([]); // Adjust the type as needed
-  const [usersWithIds, setUsersWithIds] = useState<any[]>([]);
-  const { handleGetUsers, users } = getUsersFromDb();
+  const usersWithIds = useMemo(() => addIdSequence(usersData), [usersData]);
+  // const { handleGetUsers, users } = getUsersFromDb();
+  const { handleGetUsers } = getUsersFromDb();
+  const { handleSentFile } = sentFileSuccess();
+
   useEffect(() => {
     handleGetUsers();
   }, []);
-  useEffect(() => {
-    setUsersWithIds(addIdSequence(users));
-  }, [users]);
-
-  const { handleSentFile } = sentFileSuccess();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -51,7 +51,9 @@ const Users = () => {
         {fileError && <p style={{ color: "red" }}>{fileError}</p>}
       </div>
 
-      <DataTable slug="users" columns={columns} rows={usersWithIds} />
+      {usersWithIds.length > 0 && (
+        <DataTable slug="users" columns={columns} rows={usersWithIds} />
+      )}
       {/* TEST THE API */}
 
       {/* {isLoading ? (

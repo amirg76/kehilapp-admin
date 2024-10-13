@@ -1,7 +1,8 @@
 import { handleRequest } from "@/services/handleRequest";
 import { USERS_URL } from "@/api/apiConstants";
-import { useState } from "react";
 import moment from "moment";
+import { useDispatch } from "react-redux";
+import { usersActions } from "@/store/slices/usersSlice";
 
 interface User {
   id: string;
@@ -18,16 +19,17 @@ const formatUserDates = (users: User[]): User[] => {
   }));
 };
 export const getUsersFromDb = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const dispatch = useDispatch();
   const onGetUsersSuccess = (data: User[]): void => {
     // const status = data?.error?.status;
 
     // if (status !== undefined) {
     //   updateErrorMessage(status, setErrorMessage);
-    const formattedUsers = formatUserDates(data);
-    console.log(formattedUsers);
-    setUsers(formattedUsers);
-
+    if (data.length > 0) {
+      const formattedUsers = formatUserDates(data);
+      console.log(formattedUsers);
+      dispatch(usersActions.setUsers(formattedUsers));
+    }
     // }
   };
 
@@ -43,7 +45,6 @@ export const getUsersFromDb = () => {
   };
 
   return {
-    users,
     handleGetUsers,
     ...getUsersHandler,
   };
