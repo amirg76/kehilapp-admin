@@ -1,6 +1,6 @@
 import { GridColDef } from "@mui/x-data-grid";
 import "./add.scss";
-import { sentNewUser } from "@/helpers/sentNewUser";
+import { sentNewUser } from "@/helpers/UserHelpers/sentNewUser";
 import { useState } from "react";
 // import { useMutation, useQueryClient } from "@tanstack/react-query";
 
