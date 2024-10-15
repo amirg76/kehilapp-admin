@@ -5,7 +5,7 @@ import Add from "../../components/add/Add";
 import { columns } from "../../data";
 import { uploadExcelFile } from "@/features/authentication/helpers/uploadExcelFile";
 import { sentFileSuccess } from "@/features/authentication/helpers/sentFileSuccess";
-import { getUsersFromDb } from "@/features/authentication/helpers/getUsersFromDb";
+import { getUsersFromDb } from "@/helpers/UserHelpers/getUsersFromDb";
 import { addIdSequence } from "@/helpers/addIdSequence";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/index";
