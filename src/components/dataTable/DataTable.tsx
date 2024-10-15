@@ -72,9 +72,12 @@ const DataTable = (props: Props) => {
     if (!hasChanges) return null;
 
     return (
-      <button onClick={() => saveChanges(params.row._id as string)}>
-        Save Changes
-      </button>
+      <img
+        onClick={() => saveChanges(params.row._id as string)}
+        src="/diskette-Save.svg"
+        alt="save"
+        title="Save"
+      />
     );
   };
 
@@ -92,13 +95,13 @@ const DataTable = (props: Props) => {
         return (
           <div className="action">
             <Link to={`/${props.slug}/${params.row.id}`}>
-              <img src="/view.svg" alt="" />
+              <img src="/view.svg" alt="view" title="view" />
             </Link>
             <div
               className="delete"
               onClick={() => handleDelete(params.row._id)}
             >
-              <img src="/delete.svg" alt="" />
+              <img src="/delete.svg" alt="delete" title="delete" />
             </div>
             {renderSaveButton(params)}
           </div>
