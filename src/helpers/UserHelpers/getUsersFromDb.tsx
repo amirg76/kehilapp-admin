@@ -41,7 +41,7 @@ export const getUsersFromDb = () => {
   });
 
   const handleGetUsers = () => {
-    getUsersHandler.mutate({});
+    getUsersHandler.mutateAsync({});
   };
 
   return {

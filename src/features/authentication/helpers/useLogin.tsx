@@ -36,7 +36,7 @@ export const useLogin = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
     email: string;
     password: string;
   }) => {
-    loginHandler.mutate(userCredentials);
+    loginHandler.mutateAsync(userCredentials);
   };
 
   return { handleLogin, ...loginHandler };

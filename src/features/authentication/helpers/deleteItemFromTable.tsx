@@ -21,7 +21,7 @@ export const deleteItemFromTable = () => {
   });
 
   const handleDeleteItem = (id: string) => {
-    deleteItemHandler.mutate({ id });
+    deleteItemHandler.mutateAsync({ id });
   };
 
   return {

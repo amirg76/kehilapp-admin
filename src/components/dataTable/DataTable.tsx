@@ -1,17 +1,13 @@
-import {
-  DataGrid,
-  GridColDef,
-  GridToolbar,
-  GridRowModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-import { debounce } from "lodash";
+import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
+
 import "./dataTable.scss";
-import { Link } from "react-router-dom";
+
 import { deleteItemFromTable } from "@/features/authentication/helpers/deleteItemFromTable";
 
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { updateUsersInDb } from "@/helpers/UserHelpers/updateUsersInDb";
+import { createActionColumn } from "@/helpers/DataTableHelpers/actionColumn";
+import { useRowUpdateHandler } from "@/helpers/DataTableHelpers/rowUpdateHandler";
 
 // Define a type for your user object
 interface User {
@@ -28,57 +24,44 @@ interface PendingUpdates {
   [userId: string]: Partial<User>;
 }
 
+// Track the current icon state per row
+interface RowIconsState {
+  [userId: string]: string;
+}
 const DataTable = (props: Props) => {
   const { handleDeleteItem } = deleteItemFromTable();
-  const { handleUpdateUsers } = updateUsersInDb();
+  const { mutateAsync: handleUpdateUsers } = updateUsersInDb();
   const [pendingUpdates, setPendingUpdates] = useState<PendingUpdates>({});
+  const [rowIcons, setRowIcons] = useState<RowIconsState>({}); // Store icons per row
+  const { processRowUpdate } = useRowUpdateHandler({
+    setPendingUpdates,
+    setRowIcons,
+  });
 
   const saveChanges = async (userId: string) => {
     try {
+      setRowIcons((prev) => ({ ...prev, [userId]: "/reload.svg" })); // Set reload icon
+
       const update = pendingUpdates[userId];
 
-      console.log("Saved one row change:", userId, update);
-      console.log("Saved changes:", userId, pendingUpdates);
-      handleUpdateUsers({ id: userId, updateData: update });
-      // setPendingUpdates({});
+      // Wait for the backend response
+      const response = await handleUpdateUsers({
+        id: userId,
+        updateData: update,
+      });
+      if (response?.error) {
+        throw new Error(response.error.message);
+      }
+
+      setTimeout(() => {
+        setRowIcons((prev) => ({ ...prev, [userId]: "/approved.svg" })); // Set approved icon
+      }, 2000);
     } catch (error) {
       console.error("Failed to save changes:", error);
+      // Optionally, set an error icon or revert to the save icon
+      setRowIcons((prev) => ({ ...prev, [userId]: "/error.svg" }));
       // Handle error (e.g., show error message to user)
     }
-  };
-  const debouncedUpdate = useCallback(
-    debounce((userId: string, field: string, value: any) => {
-      setPendingUpdates((prev) => ({
-        ...prev,
-        [userId]: { ...prev[userId], [field]: value },
-      }));
-    }, 300),
-    []
-  );
-  const processRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel) => {
-    const { _id, ...fields } = newRow;
-    Object.entries(fields).forEach(([field, value]) => {
-      if (value !== oldRow[field]) {
-        console.log("Process row update:", _id, field, value);
-
-        debouncedUpdate(_id as string, field, value);
-      }
-    });
-    return newRow;
-  };
-  const renderSaveButton = (params: GridRenderCellParams) => {
-    const hasChanges = !!pendingUpdates[params.row._id as string];
-
-    if (!hasChanges) return null;
-
-    return (
-      <img
-        onClick={() => saveChanges(params.row._id as string)}
-        src="/diskette-Save.svg"
-        alt="save"
-        title="Save"
-      />
-    );
   };
 
   const handleDelete = (id: string) => {
@@ -86,32 +69,13 @@ const DataTable = (props: Props) => {
     handleDeleteItem(id);
   };
 
-  const actionColumn: GridColDef = useMemo(
-    () => ({
-      field: "action",
-      headerName: "Action",
-      width: 200,
-      renderCell: (params: GridRenderCellParams) => {
-        return (
-          <div className="action">
-            <Link to={`/${props.slug}/${params.row.id}`}>
-              <img src="/view.svg" alt="view" title="view" />
-            </Link>
-            <div
-              className="delete"
-              onClick={() => handleDelete(params.row._id)}
-            >
-              <img src="/delete.svg" alt="delete" title="delete" />
-            </div>
-            {renderSaveButton(params)}
-          </div>
-        );
-      },
-    }),
-
-    [pendingUpdates, handleDelete, renderSaveButton]
-  );
-
+  const actionColumn = createActionColumn({
+    slug: props.slug,
+    pendingUpdates,
+    handleDelete,
+    saveChanges,
+    rowIcons,
+  });
   return (
     <div className="dataTable">
       <DataGrid
@@ -151,5 +115,4 @@ const DataTable = (props: Props) => {
     </div>
   );
 };
-
 export default DataTable;
