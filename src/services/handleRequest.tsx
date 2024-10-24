@@ -1,8 +1,15 @@
 import { useMutation } from "react-query";
 import { httpService } from "./httpService";
-import { getToken } from "./getToken";
+
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 
+interface ApiResponse<T> {
+  data?: T;
+  error?: {
+    message: string;
+    status: number;
+  };
+}
 interface HandleRequestOptions<TData> {
   url: string;
   method: HttpMethod;
@@ -15,11 +22,11 @@ export const handleRequest = <TData = any, TVariables = any>({
   handleSuccessCallback,
 }: HandleRequestOptions<TData>) => {
   const {
-    mutate,
+    mutateAsync,
     isLoading,
     isError,
     error: authError,
-  } = useMutation({
+  } = useMutation<ApiResponse<TData>, Error, TVariables>({
     mutationFn: (variables: TVariables) => httpService[method](url, variables),
     onSuccess: (data) => handleSuccessCallback(data),
     onError: (err) => {
@@ -28,5 +35,5 @@ export const handleRequest = <TData = any, TVariables = any>({
     },
   });
 
-  return { mutate, isLoading, isError, authError };
+  return { mutateAsync, isLoading, isError, authError };
 };

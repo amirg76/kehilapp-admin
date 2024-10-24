@@ -23,7 +23,7 @@ export const sentNewUser = () => {
   const handleSentNewUser = (newUser: Record<string, string | boolean>) => {
     console.log(newUser);
 
-    sentNewUserHandler.mutate(newUser);
+    sentNewUserHandler.mutateAsync(newUser);
   };
 
   return {

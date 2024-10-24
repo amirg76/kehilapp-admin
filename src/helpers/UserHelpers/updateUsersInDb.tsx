@@ -5,13 +5,14 @@ import { useDispatch } from "react-redux";
 import { usersActions } from "@/store/slices/usersSlice";
 
 interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  createdAt: string;
-  // Add other user properties as needed
+  id: number;
+  [key: string]: any;
 }
+interface UpdateUserData {
+  id: string;
+  updateData: Partial<User>;
+}
+
 const formatUserDates = (users: User[]): User[] => {
   return users.map((user) => ({
     ...user,
@@ -20,7 +21,7 @@ const formatUserDates = (users: User[]): User[] => {
 };
 export const updateUsersInDb = () => {
   const dispatch = useDispatch();
-  const onUpdateUsersSuccess = (data: User[]): void => {
+  const onUpdateUsersSuccess = (data: any): void => {
     // const status = data?.error?.status;
 
     // if (status !== undefined) {
@@ -32,8 +33,7 @@ export const updateUsersInDb = () => {
     }
     // }
   };
-
-  const updateUsersHandler = handleRequest({
+  const updateUsersHandler = handleRequest<User[], UpdateUserData>({
     url: UPDATE_TABLE_ITEM_URL,
     method: "post",
     handleSuccessCallback: onUpdateUsersSuccess,
@@ -41,11 +41,12 @@ export const updateUsersInDb = () => {
   });
 
   const handleUpdateUsers = (itemUpdates: { id: string; updateData: {} }) => {
-    updateUsersHandler.mutate(itemUpdates);
+    updateUsersHandler.mutateAsync(itemUpdates);
   };
 
   return {
     handleUpdateUsers,
-    ...updateUsersHandler,
+    isLoading: updateUsersHandler.isLoading,
+    mutateAsync: updateUsersHandler.mutateAsync,
   };
 };

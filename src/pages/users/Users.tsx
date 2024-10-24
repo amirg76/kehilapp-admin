@@ -9,13 +9,14 @@ import { getUsersFromDb } from "@/helpers/UserHelpers/getUsersFromDb";
 import { addIdSequence } from "@/helpers/addIdSequence";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/index";
+import { updateUsersInDb } from "@/helpers/UserHelpers/updateUsersInDb";
 
 const Users = () => {
   const usersData = useSelector((state: RootState) => state.users.usersData);
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState("");
   const usersWithIds = useMemo(() => addIdSequence(usersData), [usersData]);
-  // const { handleGetUsers, users } = getUsersFromDb();
+
   const { handleGetUsers } = getUsersFromDb();
   const { handleSentFile } = sentFileSuccess();
 
