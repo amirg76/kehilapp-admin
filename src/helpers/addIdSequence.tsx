@@ -1,3 +1,11 @@
-export const addIdSequence = (data: any[]) => {
-  return data.map((item, index) => ({ ...item, id: index + 1 }));
+import moment from "moment";
+
+export const addIdSequence = (data: any[] | undefined | null) => {
+  if (!data) return [];
+
+  return data.map((item, index) => ({
+    ...item,
+    createdAt: moment(item.createdAt).format("DD.MM.YYYY"),
+    id: index + 1,
+  }));
 };

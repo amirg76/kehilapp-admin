@@ -32,7 +32,7 @@ async function ajax(endpoint: string, method = "GET", data = null) {
   };
   const loggedInUser = sessionStorage.getItem("loggedInUser");
 
-  if (endpoint !== LOGIN_URL && method === "POST") {
+  if (endpoint !== LOGIN_URL) {
     if (loggedInUser) {
       const userData = JSON.parse(loggedInUser);
 
