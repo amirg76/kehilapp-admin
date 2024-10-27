@@ -10,19 +10,22 @@ import { addIdSequence } from "@/helpers/addIdSequence";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/index";
 import { updateUsersInDb } from "@/helpers/UserHelpers/updateUsersInDb";
+import { useUsers } from "@/services/handleGetRequest";
 
 const Users = () => {
   const usersData = useSelector((state: RootState) => state.users.usersData);
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState("");
-  const usersWithIds = useMemo(() => addIdSequence(usersData), [usersData]);
+  // const usersWithIds = useMemo(() => addIdSequence(usersData), [usersData]);
 
-  const { handleGetUsers } = getUsersFromDb();
+  // const { handleGetUsers } = getUsersFromDb();
+  const { data: users, isLoading, error } = useUsers();
   const { handleSentFile } = sentFileSuccess();
+  const usersWithIds = useMemo(() => addIdSequence(users || []), [users]);
 
-  useEffect(() => {
-    handleGetUsers();
-  }, []);
+  // useEffect(() => {
+  //   handleGetUsers();
+  // }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -43,6 +46,10 @@ const Users = () => {
       setFileError(error.message);
     }
   };
+
+  if (isLoading) return <div>Loading users...</div>;
+  if (error) return <div>Error loading users: {error.message}</div>;
+
   return (
     <div className="users">
       <div className="info">

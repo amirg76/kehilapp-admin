@@ -3,7 +3,7 @@ import { USERS_URL } from "@/api/apiConstants";
 import moment from "moment";
 import { useDispatch } from "react-redux";
 import { usersActions } from "@/store/slices/usersSlice";
-
+import { createQueryHook } from "@/services/handleGetRequest";
 interface User {
   id: string;
   firstName: string;
@@ -44,8 +44,19 @@ export const getUsersFromDb = () => {
     getUsersHandler.mutateAsync({});
   };
 
-  return {
-    handleGetUsers,
-    ...getUsersHandler,
-  };
+  // return {
+  //   handleGetUsers,
+  //   ...getUsersHandler,
+  // };
 };
+export const useUsers = createQueryHook<User[]>(["users"], USERS_URL, {
+  staleTime: 5000,
+  refetchOnWindowFocus: false,
+});
+
+// If you need to fetch a single user
+export const useUser = (userId: string) =>
+  createQueryHook<User>(["users", userId], `/api/users/${userId}`, {
+    staleTime: 5000,
+    refetchOnWindowFocus: false,
+  })();

@@ -1,8 +1,13 @@
-import { useMutation } from "react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { httpService } from "./httpService";
 
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 
+// interface ApiResponse<T> {
+//   data: T;
+//   status: number;
+//   message?: string;
+// }
 interface ApiResponse<T> {
   data?: T;
   error?: {
