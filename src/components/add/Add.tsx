@@ -1,8 +1,8 @@
 import { GridColDef } from "@mui/x-data-grid";
 import "./add.scss";
-import { sentNewUser } from "@/helpers/UserHelpers/sentNewUser";
+
+import { useAddUser } from "@/helpers/UserHelpers/sentNewUser";
 import { useState } from "react";
-// import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type Props = {
   slug: string;
@@ -12,7 +12,7 @@ type Props = {
 
 const Add = (props: Props) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const { handleSentNewUser } = sentNewUser();
+  const addUser = useAddUser();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -20,40 +20,11 @@ const Add = (props: Props) => {
       [e.target.name]: e.target.value,
     });
   };
-  // TEST THE API
 
-  // const queryClient = useQueryClient();
-
-  // const mutation = useMutation({
-  //   mutationFn: () => {
-  //     return fetch(`http://localhost:8800/api/${props.slug}s`, {
-  //       method: "post",
-  //       headers: {
-  //         Accept: "application/json",
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         id: 111,
-  //         img: "",
-  //         lastName: "Hello",
-  //         firstName: "Test",
-  //         email: "testme@gmail.com",
-  //         phone: "123 456 789",
-  //         createdAt: "01.02.2023",
-  //         verified: true,
-  //       }),
-  //     });
-  //   },
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries([`all${props.slug}s`]);
-  //   },
-  // });
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     //add new item
-    handleSentNewUser(formData);
+    addUser.mutate(formData);
     props.setOpen(false);
   };
   return (

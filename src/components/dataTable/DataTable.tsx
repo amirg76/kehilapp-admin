@@ -2,7 +2,7 @@ import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 
 import "./dataTable.scss";
 
-import { deleteItemFromTable } from "@/features/authentication/helpers/deleteItemFromTable";
+import { useDeleteUser } from "@/helpers/UserHelpers/deleteItemFromTable";
 
 import { useState } from "react";
 import { updateUsersInDb } from "@/helpers/UserHelpers/updateUsersInDb";
@@ -29,7 +29,7 @@ interface RowIconsState {
   [userId: string]: string;
 }
 const DataTable = (props: Props) => {
-  const { handleDeleteItem, isDeleting } = deleteItemFromTable();
+  const deleteUser = useDeleteUser();
   const { mutateAsync: handleUpdateUsers } = updateUsersInDb();
   const [pendingUpdates, setPendingUpdates] = useState<PendingUpdates>({});
   const [rowIcons, setRowIcons] = useState<RowIconsState>({}); // Store icons per row
@@ -64,13 +64,9 @@ const DataTable = (props: Props) => {
     }
   };
 
-  // const handleDelete = (id: string) => {
-  //   //delete the item
-  //   handleDeleteItem(id);
-  // };
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      await handleDeleteItem(id);
+      deleteUser.mutate({ id });
     }
   };
   const actionColumn = createActionColumn({
