@@ -1,33 +1,16 @@
-import { handleRequest } from "@/services/handleRequest";
 import { ADD_USER_URL } from "@/api/apiConstants";
+import { useCustomMutation } from "@/services/useMutationService";
 
-export const sentNewUser = () => {
-  const onSentNewUserSuccess = (data: { error: { status: any } }) => {
-    // const status = data?.error?.status;
-    console.log("onSentNewUserSuccess");
-    // if (status !== undefined) {
-    //   updateErrorMessage(status, setErrorMessage);
-
-    //   return;
-    // }
-    console.log(data);
-  };
-
-  const sentNewUserHandler = handleRequest({
+export interface User {
+  id?: string;
+  name: string;
+  email: string;
+  // ... other user properties
+}
+// Specific mutation hooks using the generic hook
+export const useAddUser = () => {
+  return useCustomMutation<User, Partial<User>>({
     url: ADD_USER_URL,
-    method: "post",
-    handleSuccessCallback: onSentNewUserSuccess,
-    // onLoginError
+    queryKeysToInvalidate: ["users"],
   });
-
-  const handleSentNewUser = (newUser: Record<string, string | boolean>) => {
-    console.log(newUser);
-
-    sentNewUserHandler.mutateAsync(newUser);
-  };
-
-  return {
-    handleSentNewUser,
-    ...sentNewUserHandler,
-  };
 };

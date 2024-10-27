@@ -1,41 +1,26 @@
 import DataTable from "../../components/dataTable/DataTable";
 import "./Users.scss";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Add from "../../components/add/Add";
 import { columns } from "../../data";
 import { uploadExcelFile } from "@/features/authentication/helpers/uploadExcelFile";
 import { sentFileSuccess } from "@/features/authentication/helpers/sentFileSuccess";
-import { getUsersFromDb } from "@/helpers/UserHelpers/getUsersFromDb";
 import { addIdSequence } from "@/helpers/addIdSequence";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/index";
-import { updateUsersInDb } from "@/helpers/UserHelpers/updateUsersInDb";
 import { useUsers } from "@/services/handleGetRequest";
 
 const Users = () => {
-  const usersData = useSelector((state: RootState) => state.users.usersData);
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState("");
-  // const usersWithIds = useMemo(() => addIdSequence(usersData), [usersData]);
-
-  // const { handleGetUsers } = getUsersFromDb();
   const { data: users, isLoading, error } = useUsers();
   const { handleSentFile } = sentFileSuccess();
   const usersWithIds = useMemo(() => addIdSequence(users || []), [users]);
-
-  // useEffect(() => {
-  //   handleGetUsers();
-  // }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
       uploadExcelFile(file);
-
       setFileError("");
-
       // Prepare formData for file upload
-
       const formData = new FormData();
       formData.append("file", file as Blob);
 
@@ -62,13 +47,7 @@ const Users = () => {
       {usersWithIds.length > 0 && (
         <DataTable slug="users" columns={columns} rows={usersWithIds} />
       )}
-      {/* TEST THE API */}
 
-      {/* {isLoading ? (
-        "Loading..."
-      ) : (
-        <DataTable slug="users" columns={columns} rows={data} />
-      )} */}
       {open && (
         <Add
           slug="user"
