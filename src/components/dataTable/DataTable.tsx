@@ -1,11 +1,8 @@
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
-
 import "./dataTable.scss";
-
 import { useDeleteUser } from "@/helpers/UserHelpers/deleteItemFromTable";
-
 import { useState } from "react";
-import { updateUsersInDb } from "@/helpers/UserHelpers/updateUsersInDb";
+import { useUpdateUser } from "@/helpers/UserHelpers/updateUsersInDb";
 import { createActionColumn } from "@/helpers/DataTableHelpers/actionColumn";
 import { useRowUpdateHandler } from "@/helpers/DataTableHelpers/rowUpdateHandler";
 
@@ -14,6 +11,7 @@ interface User {
   id: number;
   [key: string]: any; // For other fields
 }
+
 type Props = {
   columns: GridColDef[];
   rows: object[];
@@ -30,7 +28,7 @@ interface RowIconsState {
 }
 const DataTable = (props: Props) => {
   const deleteUser = useDeleteUser();
-  const { mutateAsync: handleUpdateUsers } = updateUsersInDb();
+  const updateUser = useUpdateUser();
   const [pendingUpdates, setPendingUpdates] = useState<PendingUpdates>({});
   const [rowIcons, setRowIcons] = useState<RowIconsState>({}); // Store icons per row
   const { processRowUpdate } = useRowUpdateHandler({
@@ -45,13 +43,10 @@ const DataTable = (props: Props) => {
       const update = pendingUpdates[userId];
 
       // Wait for the backend response
-      const response = await handleUpdateUsers({
+      updateUser.mutate({
         id: userId,
         updateData: update,
       });
-      if (response?.error) {
-        throw new Error(response.error.message);
-      }
 
       setTimeout(() => {
         setRowIcons((prev) => ({ ...prev, [userId]: "/approved.svg" })); // Set approved icon
