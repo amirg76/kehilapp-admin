@@ -3,21 +3,30 @@ import { httpService } from "./httpService";
 
 type HttpMethod = "post" | "put" | "delete";
 
-interface MutationConfig<TData, TVariables> {
+interface AuthError {
+  message: string;
+  // ... other properties
+}
+
+interface MutationConfig<TData, TVariables, TError = AuthError> {
   url: string;
   method?: HttpMethod;
   queryKeysToInvalidate?: string[];
   onSuccessCallback?: (data: TData) => void;
-  onErrorCallback?: (error: Error) => void;
+  onErrorCallback?: (error: TError) => void;
 }
 
-export function useCustomMutation<TData = unknown, TVariables = unknown>({
+export function useCustomMutation<
+  TData = unknown,
+  TVariables = unknown,
+  TError = AuthError
+>({
   url,
   method = "post",
   queryKeysToInvalidate = [],
   onSuccessCallback,
   onErrorCallback,
-}: MutationConfig<TData, TVariables>) {
+}: MutationConfig<TData, TVariables, TError>) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -35,7 +44,7 @@ export function useCustomMutation<TData = unknown, TVariables = unknown>({
         onSuccessCallback(data);
       }
     },
-    onError: (error: Error) => {
+    onError: (error: TError) => {
       // Call custom error callback if provided
       if (onErrorCallback) {
         onErrorCallback(error);
