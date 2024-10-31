@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { httpService } from "./httpService";
+import { AuthError } from "@/types/auth.type";
 
 type HttpMethod = "post" | "put" | "delete";
 
-interface AuthError {
-  message: string;
-  // ... other properties
-}
+// interface AuthError {
+//   message: string;
+//   // ... other properties
+// }
 
 interface MutationConfig<TData, TVariables, TError = AuthError> {
   url: string;
