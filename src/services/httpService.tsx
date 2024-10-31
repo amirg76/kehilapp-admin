@@ -34,9 +34,8 @@ async function ajax(endpoint: string, method = "GET", data = null) {
 
   if (endpoint !== LOGIN_URL) {
     if (loggedInUser) {
-      const userData = JSON.parse(loggedInUser);
-
-      headers.Authorization = `Bearer ${userData.data.token}`;
+      const token = JSON.parse(loggedInUser);
+      headers.Authorization = `Bearer ${token}`;
     }
 
     // headers.Authorization = `Bearer ${loggedInUser}`;

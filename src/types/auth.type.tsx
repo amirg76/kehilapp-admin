@@ -2,10 +2,22 @@ export interface ValidationError {
   field: string;
   message: string;
 }
-export interface ErrorResponse {
-  status: number;
+export interface SuccessResponse {
+  success: true;
+  data: any; // You might want to type this more specifically based on your data structure
   message: string;
-  validationErrors?: ValidationError[]; // Changed from string[] to ValidationError[]
+}
+export interface ErrorResponse {
+  // status: number;
+  // message: string;
+  // validationErrors?: ValidationError[]; // Changed from string[] to ValidationError[]
+  success: false;
+  data: null;
+  error: {
+    status: number;
+    message: string;
+    validationErrors?: ValidationError[];
+  };
 }
 export interface AuthError {
   message: string;
