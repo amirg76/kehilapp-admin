@@ -1,5 +1,5 @@
 import { ValidationRule } from "./types";
-
+// Validation rules for the form
 export const VALIDATION_RULES = {
   required: (message: string = "שדה חובה"): ValidationRule => ({
     validate: (value: any) =>

@@ -1,6 +1,7 @@
 import { ValidationRule } from "./types";
 import { FIELD_VALIDATORS } from "./fieldValidators";
 
+// Field validation function for a single field
 export const validateField = (
   fieldName: string,
   value: any,
