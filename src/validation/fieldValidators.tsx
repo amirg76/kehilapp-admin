@@ -1,5 +1,5 @@
 import { VALIDATION_RULES } from "./rules";
-
+// Predefined field validators
 export const FIELD_VALIDATORS = {
   email: [VALIDATION_RULES.required(), VALIDATION_RULES.email()],
   password: [

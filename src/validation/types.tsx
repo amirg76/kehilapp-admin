@@ -1,3 +1,4 @@
+// Type definitions for validation
 export type ValidationRule = {
   validate: (value: any) => boolean;
   message: string;
