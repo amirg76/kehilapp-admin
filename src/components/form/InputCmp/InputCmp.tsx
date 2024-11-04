@@ -8,7 +8,8 @@ interface InputCmpProps {
   value: string; // Current value of the input field
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // Event handler for onChange
   placeholder?: string; // Placeholder text for the input field
-  onBlur: (e: React.ChangeEvent<HTMLInputElement>) => void; // Event handler for onBlur (validation)
+  // onBlur: (e: React.ChangeEvent<HTMLInputElement>) => void; // Event handler for onBlur (validation)
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   inputStyle?: string; // Optional: Additional styles for the input field
   containerstyle?: string; // Optional: Styles for the container
   onContainerClick?: (event: React.MouseEvent<HTMLDivElement>) => void;

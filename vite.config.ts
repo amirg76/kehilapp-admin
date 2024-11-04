@@ -58,6 +58,7 @@ export default defineConfig({
       "@context": "/src/context",
       "@hooks": "/src/hooks",
       "@utils": "/src/utils",
+      "@validation": "/src/validation",
       "@services": "/src/services",
       "@ui": "/src/components/ui",
       "@assets": "/src/assets",
