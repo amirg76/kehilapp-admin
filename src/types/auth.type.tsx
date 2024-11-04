@@ -26,9 +26,18 @@ export interface AuthError {
 }
 
 export interface FormErrors {
-  email: string | null;
-  password: string | null;
-  general?: string[];
+  // email: string | null;
+  // password: string | null;
+  // general?: string[];
+  [key: string]: string;
+}
+export interface AuthFormProps {
+  formTitle: string;
+  formSubtitle: string;
+  buttonLabel: string;
+  onSubmit: (data: any) => Promise<void>;
+  isLoading?: boolean;
+  loginError?: any;
 }
 export interface BackendResponse {
   success: boolean;
