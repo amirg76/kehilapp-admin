@@ -140,13 +140,13 @@ export const columns: GridColDef[] = [
   },
   {
     field: "email",
-    type: "string",
+    type: "email",
     headerName: "Email",
     width: 200,
   },
   {
     field: "phone",
-    type: "string",
+    type: "phone",
     headerName: "Phone",
     width: 200,
   },

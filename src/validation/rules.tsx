@@ -15,6 +15,10 @@ export const VALIDATION_RULES = {
     message,
   }),
 
+  phone: (message: string = "מספר טלפון אינו תקין"): ValidationRule => ({
+    validate: (value: string) => /^\d{3}\d{7}$/.test(value),
+    message,
+  }),
   minLength: (
     length: number,
     message: string = `אורך מינימלי נדרש הוא ${length} תווים`

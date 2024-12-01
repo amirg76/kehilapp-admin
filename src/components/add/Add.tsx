@@ -1,8 +1,7 @@
 import { GridColDef } from "@mui/x-data-grid";
 import "./add.scss";
-
+import { useFormValidation, VALIDATION_RULES } from "@/validation/index";
 import { useAddUser } from "@/helpers/UserHelpers/sentNewUser";
-import { useState } from "react";
 
 type Props = {
   slug: string;
@@ -11,22 +10,44 @@ type Props = {
 };
 
 const Add = (props: Props) => {
-  const [formData, setFormData] = useState<Record<string, string>>({});
   const addUser = useAddUser();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // Create custom validation rules based on column types
+  const validationRules: { [key: string]: any[] } = {};
+  for (const column of props.columns) {
+    if (column.field === "id" || column.field === "img") continue;
+    // Add validation rule for required fields
+    const fieldRules = [VALIDATION_RULES.required()];
+    if (column.type === "number") {
+      fieldRules.push(VALIDATION_RULES.number());
+    }
+    if (column.type === "email") {
+      fieldRules.push(VALIDATION_RULES.email());
+    }
+    if (column.type === "phone") {
+      fieldRules.push(VALIDATION_RULES.phone());
+    }
+    // Add validation rule for specific fields
+    validationRules[column.field] = fieldRules;
+  }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // Create initial form data object
+  const initialValues: { [key: string]: any } = {};
+  for (const column of props.columns) {
+    if (column.field !== "id" && column.field !== "img") {
+      initialValues[column.field] = "";
+    }
+  }
+  // Create form validation
+  const { formData, errors, isSubmitting, handleChange, handleSubmit } =
+    useFormValidation(initialValues, validationRules);
+
+  const onSubmit = async () => {
     //add new item
     addUser.mutate(formData);
     props.setOpen(false);
   };
+
   return (
     <div className="add">
       <div className="modal">
@@ -34,7 +55,13 @@ const Add = (props: Props) => {
           X
         </span>
         <h1>Add new {props.slug}</h1>
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={(e: React.FormEvent) => {
+            e.preventDefault();
+            handleSubmit(e, onSubmit);
+          }}
+        >
+          {/* <form onClick={(e: React.FormEvent) => handleSubmit(e, onSubmit)}> */}
           {props.columns
             .filter((item) => item.field !== "id" && item.field !== "img")
             .map((column) => (
@@ -47,9 +74,14 @@ const Add = (props: Props) => {
                   value={formData[column.field] || ""}
                   onChange={handleChange}
                 />
+                {errors[column.field] && (
+                  <span className="error">{errors[column.field]}</span>
+                )}
               </div>
             ))}
-          <button>Send</button>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Sending..." : "Send"}
+          </button>
         </form>
       </div>
     </div>

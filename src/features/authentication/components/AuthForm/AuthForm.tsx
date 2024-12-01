@@ -35,24 +35,26 @@ const AuthForm: FC<AuthFormProps> = (
     // Your existing submit logic here
     // login({
     //   email: "sss@",
-    //   password: "12345678",
+    //   password: "1234567",
     // });
     login(formData);
   };
 
   // Get validation errors from backend if they exist
-  const getFieldError = (
-    fieldName: "email" | "password"
-  ): string | undefined => {
+  const getFieldError = (fieldName: "email" | "password"): string => {
     const backendError = loginError?.validationErrors?.find(
       (error: ValidationError) => error.field === fieldName
     );
 
+    console.log("backendError:", backendError);
+
     // Convert null to undefined and ensure string type
     const formError = errors[fieldName];
-    console.log("backendError?.message:", backendError?.message);
+    console.log("formError:", formError);
 
-    return formError || backendError?.message || undefined;
+    return (
+      (formError !== undefined && formError) || backendError?.message || ""
+    );
   };
 
   const formTitle = "כניסה לאתר";
@@ -92,6 +94,7 @@ const AuthForm: FC<AuthFormProps> = (
           <InputCmp
             label="אימייל"
             name="email"
+            type="email"
             value={formData.email}
             onChange={handleChange}
             // onBlur={validateForm}
@@ -118,11 +121,9 @@ const AuthForm: FC<AuthFormProps> = (
           />
 
           <ErrorMessage msg={getFieldError("password")} />
-          {/* <ErrorMessage msg={errors.password} /> */}
+
           {/* Global error message */}
-          {loginError &&
-            loginError.validationErrors &&
-            console.log("loginError:", loginError)}
+
           {loginError && !loginError.validationErrors && (
             <ErrorMessage msg={loginError.message} />
           )}

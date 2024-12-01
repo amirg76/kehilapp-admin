@@ -84,7 +84,7 @@ export const useAuthMutation = () => {
 
       // Handle success response
       const { data, message } = response;
-      console.log("data:", JSON.stringify(data.user, null, 2));
+      // console.log("data:", JSON.stringify(data.user, null, 2));
 
       sessionStorage.setItem("loggedInUser", JSON.stringify(data.token));
       dispatch(authActions.login(data.user));
