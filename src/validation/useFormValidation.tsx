@@ -12,7 +12,7 @@ export const useFormValidation = (
   const [errors, setErrors] = React.useState<ValidationErrors>({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const validateForm = (fieldName?: string, fieldValue?: any) => {
+  const validateForm = (fieldName?: string, fieldValue?: any): boolean => {
     if (fieldName && fieldValue !== undefined) {
       // Single field validation
       const rules =
@@ -49,16 +49,16 @@ export const useFormValidation = (
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value,
     }));
     validateForm(name, value);
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     validateForm(name, value);
   };

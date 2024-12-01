@@ -1,6 +1,6 @@
 import "./errorMessage.scss";
 interface ErrorMessageProps {
-  msg?: string;
+  msg: string;
   style?: string;
 }
 
