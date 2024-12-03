@@ -2,6 +2,8 @@ import { ADD_USER_URL } from "@/api/apiConstants";
 import { useCustomMutation } from "@/services/useMutationService";
 
 export interface User {
+  error: any;
+  success: any;
   id?: string;
   name: string;
   email: string;
