@@ -46,11 +46,8 @@ const AuthForm: FC<AuthFormProps> = (
       (error: ValidationError) => error.field === fieldName
     );
 
-    console.log("backendError:", backendError);
-
     // Convert null to undefined and ensure string type
     const formError = errors[fieldName];
-    console.log("formError:", formError);
 
     return (
       (formError !== undefined && formError) || backendError?.message || ""
