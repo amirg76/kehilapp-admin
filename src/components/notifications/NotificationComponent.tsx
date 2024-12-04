@@ -15,35 +15,6 @@ interface NotificationProps extends NotificationState {
   onClose?: () => void; // Make it optional since success doesn't need it
 }
 
-export const useNotification = (
-  initialState: NotificationState,
-  closeCallback?: () => void
-) => {
-  const showNotification = (
-    type: NotificationType,
-    title: string,
-    message: string
-  ) => {
-    const newState = {
-      type,
-      title,
-      message,
-      isVisible: true,
-    };
-
-    // Hide notification after 3 seconds
-    setTimeout(() => {
-      if (closeCallback && type === "success") {
-        closeCallback();
-      }
-    }, 3000);
-
-    return newState;
-  };
-
-  return { showNotification };
-};
-
 const Notification: FC<NotificationProps> = ({
   type,
   title,
@@ -52,9 +23,6 @@ const Notification: FC<NotificationProps> = ({
   onClose,
 }) => {
   if (!isVisible) return null;
-
-  // const baseClass =
-  //   type === "success" ? "notification-success" : "notification-error";
 
   return (
     <div
