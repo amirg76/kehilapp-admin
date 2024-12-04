@@ -2,12 +2,8 @@ import { GridColDef } from "@mui/x-data-grid";
 import "./add.scss";
 import { useFormValidation, VALIDATION_RULES } from "@/validation/index";
 import { useAddUser } from "@/helpers/UserHelpers/sentNewUser";
-import Notification, {
-  NotificationState,
-  NotificationType,
-  useNotification,
-} from "@/components/notifications/NotificationComponent";
-import { useState } from "react";
+import Notification from "@/components/notifications/NotificationComponent";
+import { useCustomNotification } from "../notifications/useCustomNotification";
 
 type Props = {
   slug: string;
@@ -16,42 +12,14 @@ type Props = {
 };
 
 const Add = (props: Props) => {
-  const [notification, setNotification] = useState<NotificationState>({
-    type: "success",
-    title: "",
-    message: "",
-    isVisible: false,
+  const {
+    notification,
+    handleNotification,
+    closeNotification,
+    showNotification,
+  } = useCustomNotification({
+    closeModalCallback: () => props.setOpen(false),
   });
-
-  const closeNotification = () => {
-    setNotification((prev) => ({ ...prev, isVisible: false }));
-  };
-  const showNotification = (
-    type: NotificationType,
-    title: string,
-    message: string
-  ) => {
-    setNotification({
-      type,
-      title,
-      message,
-      isVisible: true,
-    });
-
-    // Different behavior for success and error
-    if (type === "success") {
-      // For success: close both notification and add popup after 2 seconds
-      setTimeout(() => {
-        closeNotification();
-        props.setOpen(false);
-      }, 2000);
-    } else {
-      // For error: only close notification after 6 seconds
-      setTimeout(() => {
-        closeNotification();
-      }, 6000);
-    }
-  };
 
   const addUser = useAddUser();
 
@@ -88,25 +56,16 @@ const Add = (props: Props) => {
   const onSubmit = async () => {
     try {
       const response = await addUser.mutateAsync(formData);
-
-      if (!response.success) {
-        showNotification(
-          "error",
-          "תקלה בשמירה",
-          response.error.message || `Failed to add new ${props.slug}`
-        );
-        return;
-      }
-
-      showNotification(
-        "success",
-        " ! הפעולה בוצעה בהצלחה",
+      handleNotification(
+        response,
         `New ${props.slug} has been successfully added`
       );
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : `Failed to add new ${props.slug}`;
-      showNotification("error", "Error", errorMessage);
+      showNotification(
+        "error",
+        "Error",
+        "An unexpected error occurred, please try again"
+      );
     }
   };
 
