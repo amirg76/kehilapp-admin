@@ -5,6 +5,9 @@ import { useState } from "react";
 import { useUpdateUser } from "@/helpers/UserHelpers/updateUsersInDb";
 import { createActionColumn } from "@/helpers/DataTableHelpers/actionColumn";
 import { useRowUpdateHandler } from "@/helpers/DataTableHelpers/rowUpdateHandler";
+import { useCustomNotification } from "../notifications/useCustomNotification";
+import ConfirmationModal from "../notifications/confirmationModal/confirmationModal";
+import Notification from "@/components/notifications/NotificationComponent";
 
 // Define a type for your user object
 interface User {
@@ -35,33 +38,56 @@ const DataTable = (props: Props) => {
     setPendingUpdates,
     setRowIcons,
   });
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const {
+    notification,
+    handleNotification,
+    closeNotification,
+    showNotification,
+  } = useCustomNotification();
 
   const saveChanges = async (userId: string) => {
-    try {
-      setRowIcons((prev) => ({ ...prev, [userId]: "/reload.svg" })); // Set reload icon
+    setRowIcons((prev) => ({ ...prev, [userId]: "/reload.svg" })); // Set reload icon
+    const update = pendingUpdates[userId];
+    // Wait for the backend response
+    const response = await updateUser.mutateAsync({
+      id: userId,
+      updateData: update,
+    });
 
-      const update = pendingUpdates[userId];
+    const isSuccess = handleNotification(
+      response,
+      "Changes saved successfully"
+    );
 
-      // Wait for the backend response
-      updateUser.mutate({
-        id: userId,
-        updateData: update,
-      });
-
-      setTimeout(() => {
-        setRowIcons((prev) => ({ ...prev, [userId]: "/approved.svg" })); // Set approved icon
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to save changes:", error);
-      // Optionally, set an error icon or revert to the save icon
-      setRowIcons((prev) => ({ ...prev, [userId]: "/error.svg" }));
-      // Handle error (e.g., show error message to user)
-    }
+    setRowIcons((prev) => ({
+      ...prev,
+      [userId]: isSuccess ? "/approved.svg" : "/error.svg",
+    }));
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
-      deleteUser.mutate({ id });
+  const handleDelete = (id: string) => {
+    setItemToDelete(id);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      const response = await deleteUser.mutateAsync({ id: itemToDelete });
+
+      handleNotification(response, `${props.slug} נמחק בהצלחה`);
+    } catch (err) {
+      showNotification(
+        "error",
+        "Error",
+        "An unexpected error occurred while deleting the item"
+      );
+    } finally {
+      setIsConfirmationOpen(false);
+      setItemToDelete(null);
     }
   };
   const actionColumn = createActionColumn({
@@ -72,42 +98,52 @@ const DataTable = (props: Props) => {
     rowIcons,
   });
   return (
-    <div className="dataTable">
-      <DataGrid
-        className="dataGrid"
-        rows={props.rows}
-        columns={[
-          ...props.columns.map((column) => ({ ...column, editable: true })),
-          actionColumn,
-        ]}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 10,
-            },
-          },
-        }}
-        slots={{ toolbar: GridToolbar }}
-        slotProps={{
-          toolbar: {
-            showQuickFilter: true,
-            quickFilterProps: { debounceMs: 500 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-        checkboxSelection
-        disableRowSelectionOnClick
-        disableColumnFilter
-        disableDensitySelector
-        disableColumnSelector
-        editMode="row"
-        processRowUpdate={processRowUpdate}
-        onProcessRowUpdateError={(error) => {
-          // Handle any errors here
-          console.error("Error while saving:", error);
-        }}
+    <>
+      <Notification {...notification} onClose={closeNotification} />
+      <ConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={() => setIsConfirmationOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title={`Delete ${props.slug}`}
+        message={`Are you sure you want to delete this ${props.slug}? This action cannot be undone.`}
       />
-    </div>
+      <div className="dataTable">
+        <DataGrid
+          className="dataGrid"
+          rows={props.rows}
+          columns={[
+            ...props.columns.map((column) => ({ ...column, editable: true })),
+            actionColumn,
+          ]}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 10,
+              },
+            },
+          }}
+          slots={{ toolbar: GridToolbar }}
+          slotProps={{
+            toolbar: {
+              showQuickFilter: true,
+              quickFilterProps: { debounceMs: 500 },
+            },
+          }}
+          pageSizeOptions={[5, 10]}
+          checkboxSelection
+          disableRowSelectionOnClick
+          disableColumnFilter
+          disableDensitySelector
+          disableColumnSelector
+          editMode="row"
+          processRowUpdate={processRowUpdate}
+          onProcessRowUpdateError={(error) => {
+            // Handle any errors here
+            console.error("Error while saving:", error);
+          }}
+        />
+      </div>
+    </>
   );
 };
 export default DataTable;

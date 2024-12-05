@@ -45,7 +45,7 @@ const Users = () => {
       </div>
 
       {usersWithIds.length > 0 && (
-        <DataTable slug="users" columns={columns} rows={usersWithIds} />
+        <DataTable slug="user" columns={columns} rows={usersWithIds} />
       )}
 
       {open && (
