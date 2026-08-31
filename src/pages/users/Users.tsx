@@ -1,87 +1,80 @@
-import { GridColDef } from "@mui/x-data-grid";
-import DataTable from "../../components/dataTable/DataTable";
-import "./Users.scss";
-import { useState } from "react";
-import Add from "../../components/add/Add";
-import { userRows } from "../../data";
-// import { useQuery } from "@tanstack/react-query";
+import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
+import { useQuery } from "@tanstack/react-query";
+import { usersApi } from "../../api/kehilapp";
+import { errorMessage } from "../../services/http";
+import "./users.scss";
+
+const formatDate = (value?: string) =>
+  value ? new Date(value).toLocaleDateString("he-IL", { dateStyle: "medium" }) : "—";
 
 const columns: GridColDef[] = [
-  { field: "id", headerName: "ID", width: 90 },
+  { field: "name", headerName: "שם", width: 200 },
+  { field: "email", headerName: "אימייל", width: 260 },
   {
-    field: "img",
-    headerName: "Avatar",
-    width: 100,
-    renderCell: (params) => {
-      return <img src={params.row.img || "/noavatar.png"} alt="" />;
-    },
+    field: "role",
+    headerName: "תפקיד",
+    width: 120,
+    renderCell: (params) => (
+      <span className={`role ${params.row.role === "admin" ? "admin" : "member"}`}>
+        {params.row.role === "admin" ? "מנהל" : "חבר"}
+      </span>
+    ),
   },
   {
-    field: "firstName",
-    type: "string",
-    headerName: "First name",
-    width: 150,
-  },
-  {
-    field: "lastName",
-    type: "string",
-    headerName: "Last name",
-    width: 150,
-  },
-  {
-    field: "email",
-    type: "string",
-    headerName: "Email",
-    width: 200,
-  },
-  {
-    field: "phone",
-    type: "string",
-    headerName: "Phone",
-    width: 200,
+    field: "emailVerified",
+    headerName: "אימייל מאומת",
+    width: 140,
+    // Text, not a bare tick: "לא" is unambiguous where a missing icon is not.
+    valueGetter: (params) => (params.row.emailVerified ? "כן" : "לא"),
   },
   {
     field: "createdAt",
-    headerName: "Created At",
-    width: 200,
-    type: "string",
-  },
-  {
-    field: "verified",
-    headerName: "Verified",
-    width: 150,
-    type: "boolean",
+    headerName: "נרשם",
+    width: 140,
+    valueGetter: (params) => formatDate(params.row.createdAt),
   },
 ];
 
 const Users = () => {
-  const [open, setOpen] = useState(false);
+  // GET /api/users is admin-only on the server — the whole member directory in
+  // one response. A member reaching this page gets 403 and the error below.
+  const users = useQuery({ queryKey: ["users"], queryFn: () => usersApi.list() });
 
-  // TEST THE API
-
-  // const { isLoading, data } = useQuery({
-  //   queryKey: ["allusers"],
-  //   queryFn: () =>
-  //     fetch("http://localhost:8800/api/users").then(
-  //       (res) => res.json()
-  //     ),
-  // });
+  if (users.isError) {
+    return (
+      <div className="users">
+        <div className="error" role="alert">
+          {errorMessage(users.error, "טעינת המשתמשים נכשלה.")}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="users">
       <div className="info">
-        <h1>Users</h1>
-        <button onClick={() => setOpen(true)}>Add New User</button>
+        <h1>משתמשים</h1>
+        <span className="count">
+          {users.isLoading ? "טוען…" : `${users.data?.length ?? 0} חשבונות`}
+        </span>
       </div>
-      <DataTable slug="users" columns={columns} rows={userRows} />
-      {/* TEST THE API */}
 
-      {/* {isLoading ? (
-        "Loading..."
-      ) : (
-        <DataTable slug="users" columns={columns} rows={data} />
-      )} */}
-      {open && <Add slug="user" columns={columns} setOpen={setOpen} />}
+      <div className="dataTable">
+        <DataGrid
+          className="dataGrid"
+          loading={users.isLoading}
+          rows={users.data ?? []}
+          getRowId={(row) => row._id}
+          columns={columns}
+          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+          slots={{ toolbar: GridToolbar }}
+          slotProps={{
+            toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 500 } },
+          }}
+          pageSizeOptions={[10, 25, 50]}
+          disableRowSelectionOnClick
+        />
+      </div>
     </div>
   );
 };

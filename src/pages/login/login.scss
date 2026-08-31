@@ -1,0 +1,61 @@
+.login {
+  direction: rtl;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2a3447;
+
+  .loginBox {
+    width: 100%;
+    max-width: 380px;
+    padding: 32px;
+    border-radius: 10px;
+    background: #202c3c;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    h1 { margin: 0; font-size: 24px; }
+    .sub { margin: 0 0 16px; color: #a1a1a1; font-size: 14px; }
+
+    label { font-size: 13px; color: #ddd; margin-top: 8px; }
+
+    input {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #384256;
+      background: #2a3447;
+      color: #fff;
+      font-size: 14px;
+
+      &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+    }
+
+    .error {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 5px;
+      // Not colour alone: the text itself states the failure, so this still
+      // reads for anyone who cannot distinguish the red.
+      background: rgba(255, 77, 79, 0.15);
+      border: 1px solid rgba(255, 77, 79, 0.5);
+      color: #ffb3b4;
+      font-size: 13px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 11px;
+      border: none;
+      border-radius: 5px;
+      background: #8884d8;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+      &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    }
+  }
+}

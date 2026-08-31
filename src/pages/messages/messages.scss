@@ -1,0 +1,89 @@
+.messages {
+  direction: rtl;
+
+  .info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+
+    h1 { margin: 0; font-size: 24px; }
+    .count { color: #a1a1a1; font-size: 14px; }
+  }
+
+  .error {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background: rgba(255, 77, 79, 0.15);
+    border: 1px solid rgba(255, 77, 79, 0.5);
+    color: #ffb3b4;
+    font-size: 14px;
+  }
+
+  .dataTable { height: 600px; }
+
+  // Tier badge. Carries its own text, so the colour is reinforcement and never
+  // the only signal.
+  .tier {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+
+    &.public { background: rgba(136, 132, 216, 0.2); color: #b6b3ee; }
+    &.members { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
+  }
+
+  .deleteBtn {
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 77, 79, 0.6);
+    border-radius: 4px;
+    background: transparent;
+    color: #ff9a9b;
+    cursor: pointer;
+    font-size: 13px;
+
+    &:hover { background: rgba(255, 77, 79, 0.15); }
+    &:focus-visible { outline: 2px solid #ff9a9b; outline-offset: 2px; }
+  }
+
+  .confirmBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+
+  .confirmBox {
+    background: #2a3447;
+    padding: 24px;
+    border-radius: 8px;
+    max-width: 400px;
+
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    .target { margin: 0 0 8px; color: #ddd; font-weight: 600; }
+    .warn { margin: 0 0 20px; color: #ffb3b4; font-size: 13px; }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+
+      button {
+        padding: 8px 18px;
+        border: 1px solid #4a5568;
+        border-radius: 5px;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+
+        &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+        &.danger { background: #c0392b; border-color: #c0392b; }
+        &:disabled { opacity: 0.6; cursor: not-allowed; }
+      }
+    }
+  }
+}
