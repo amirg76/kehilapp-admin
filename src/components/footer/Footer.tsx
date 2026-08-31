@@ -1,12 +1,10 @@
-import "./footer.scss"
+import "./footer.scss";
 
-const Footer = () => {
-  return (
-    <div className="footer">
-      <span>lamadmin</span>
-      <span>© Lama Dev Admin Dashboard</span>
-    </div>
-  )
-}
+const Footer = () => (
+  <footer className="footer">
+    <span>קהילאפ · לוח ניהול</span>
+    <span>קיבוץ כיסופים</span>
+  </footer>
+);
 
-export default Footer
+export default Footer;

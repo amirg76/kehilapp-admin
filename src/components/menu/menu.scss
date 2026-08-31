@@ -38,3 +38,18 @@
     }
   }
 }
+
+// Wired-up menu: the active route is marked with more than a colour shift.
+.menu {
+  direction: rtl;
+
+  .listItem.active {
+    background-color: #384256;
+    border-right: 3px solid #8884d8;
+  }
+
+  .listItem:focus-visible {
+    outline: 2px solid #8884d8;
+    outline-offset: -2px;
+  }
+}
