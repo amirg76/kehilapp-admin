@@ -14,7 +14,7 @@ const Navbar = () => {
   return (
     <header className="navbar">
       <div className="logo">
-        <span>קהילאפ · ניהול</span>
+        <span>Kehilapp · ניהול</span>
       </div>
       <div className="icons">
         {/* The real signed-in identity, resolved from the httpOnly session cookie

@@ -63,7 +63,7 @@ const Login = () => {
     <div className="login">
       <form className="loginBox" onSubmit={handleSubmit}>
         <h1>לוח ניהול</h1>
-        <p className="sub">קהילאפ — קיבוץ כיסופים</p>
+        <p className="sub">Kehilapp — קיבוץ כיסופים</p>
 
         <label htmlFor="email">אימייל</label>
         <input
