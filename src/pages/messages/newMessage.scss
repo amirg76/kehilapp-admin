@@ -127,7 +127,10 @@
       padding: 11px;
       border: none;
       border-radius: 5px;
-      background: #8884d8;
+      // White on the #8884d8 accent measures 3.31:1, under the 4.5:1 floor.
+      // Darkened to 5.63:1 for button fills; the accent itself is kept for
+      // focus outlines, which are judged against the adjacent colour.
+      background: #615cb8;
       color: #fff;
       font-size: 15px;
       cursor: pointer;
