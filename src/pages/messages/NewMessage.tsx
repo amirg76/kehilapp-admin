@@ -46,8 +46,13 @@ const NewMessage = () => {
   const canSubmit =
     titleValid && textValid && categoryId.length > 0 && !categories.isError && !create.isLoading;
 
-  const titleOverLimit = titleLength > MESSAGE_LIMITS.titleMax;
-  const textOverLimit = textLength > MESSAGE_LIMITS.textMax;
+  // At the cap, not over it. Both fields carry maxLength, so the browser
+  // refuses the next character outright and a "you have gone over" state can
+  // never be reached -- a probe run against a real browser proved that branch
+  // was dead. What a typist actually experiences is the field going quiet, so
+  // the counter is what has to explain it.
+  const titleAtLimit = titleLength >= MESSAGE_LIMITS.titleMax;
+  const textAtLimit = textLength >= MESSAGE_LIMITS.textMax;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -76,7 +81,7 @@ const NewMessage = () => {
             aria-describedby="titleCount"
             required
           />
-          <span id="titleCount" className={`counter${titleOverLimit ? " over-limit" : ""}`}>
+          <span id="titleCount" className={`counter${titleAtLimit ? " at-limit" : ""}`}>
             {titleLength}/{MESSAGE_LIMITS.titleMax}
           </span>
         </div>
@@ -92,7 +97,7 @@ const NewMessage = () => {
             aria-describedby="textCount"
             required
           />
-          <span id="textCount" className={`counter${textOverLimit ? " over-limit" : ""}`}>
+          <span id="textCount" className={`counter${textAtLimit ? " at-limit" : ""}`}>
             {textLength}/{MESSAGE_LIMITS.textMax}
           </span>
         </div>
