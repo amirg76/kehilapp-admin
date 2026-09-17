@@ -35,4 +35,82 @@ a {
 .contentContainer {
   padding: 5px 20px;
   width: 100%;
+  // Flex items default to min-width:auto, which floors their shrink at their
+  // content's intrinsic (min-content) width — so a wide DataGrid inside this
+  // container was preventing the container itself from shrinking below the
+  // grid's own width, and the PAGE grew instead of the grid's own
+  // overflow-x:auto ever kicking in. min-width:0 removes that floor so the
+  // grid's own horizontal scroller (see .dataTable in users.scss) is what
+  // absorbs the overflow, not the page.
+  min-width: 0;
+}
+
+// Confirm dialog. Was nested under .messages (messages.scss) — lifted here so
+// any page can reuse the same "are you sure" pattern (Users needs it too).
+// Not verbatim: `direction: rtl` was added to .confirmBox, since this file no
+// longer nests under a .messages wrapper that already carried it. In practice
+// it is a no-op (the page is already RTL end to end), but it is a real
+// addition and the comment should not claim otherwise. Everything else here
+// is unchanged, and nothing referenced a .messages-scoped variable or sibling.
+.confirmBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.confirmBox {
+  background: #2a3447;
+  padding: 24px;
+  border-radius: 8px;
+  max-width: 400px;
+  direction: rtl;
+
+  h2 { margin: 0 0 12px; font-size: 18px; }
+  .target { margin: 0 0 8px; color: #ddd; font-weight: 600; }
+  .warn { margin: 0 0 20px; color: #ffb3b4; font-size: 13px; }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+
+    button {
+      padding: 8px 18px;
+      border: 1px solid #4a5568;
+      border-radius: 5px;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+
+      &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+      &.danger { background: #c0392b; border-color: #c0392b; }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+      // aria-disabled, not the native attribute: the confirm button holds
+      // focus at the moment the mutation starts, and a native `disabled`
+      // would drop that focus to <body> (see Users.tsx). Same look, without
+      // removing it from the focus order.
+      &[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+    }
+  }
+}
+
+// Shown while the session probe is in flight, and when a non-admin lands here.
+.routeGate {
+  direction: rtl;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #ddd;
+
+  h2 { margin: 0; }
+  p { margin: 0; color: #a1a1a1; }
 }

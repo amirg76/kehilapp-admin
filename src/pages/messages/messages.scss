@@ -1,0 +1,99 @@
+.messages {
+  direction: rtl;
+
+  .info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    h1 { margin: 0; font-size: 24px; }
+    .count { color: #a1a1a1; font-size: 14px; margin-inline-end: auto; }
+
+    .newMessageBtn {
+      padding: 8px 16px;
+      border-radius: 5px;
+      // White on the #8884d8 accent measures 3.31:1, under the 4.5:1 floor.
+      // Darkened to 5.63:1 for button fills; the accent itself is kept for
+      // focus outlines, which are judged against the adjacent colour.
+      background: #615cb8;
+      color: #fff;
+      font-size: 14px;
+      text-decoration: none;
+      white-space: nowrap;
+
+      &:hover { opacity: 0.9; }
+      &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    }
+  }
+
+  .error {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background: rgba(255, 77, 79, 0.15);
+    border: 1px solid rgba(255, 77, 79, 0.5);
+    color: #ffb3b4;
+    font-size: 14px;
+  }
+
+  .status {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background: rgba(136, 132, 216, 0.15);
+    border: 1px solid rgba(136, 132, 216, 0.5);
+    color: #d6d4f7;
+    font-size: 14px;
+
+    // The live region is always in the DOM so a screen reader announces the
+    // text that lands in it later. Empty, it must occupy nothing: collapsed
+    // rather than hidden, because display:none would drop it from the
+    // accessibility tree and the announcement with it.
+    &:empty {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+  }
+
+  // Same containment the users table has: the grid is wider than a phone, and
+  // its own horizontal scroller is what should absorb that -- not the page.
+  // Fixing one table and leaving its twin sideways-scrolling would be worse
+  // than fixing neither, since the difference would read as a layout bug.
+  .dataTable {
+    height: 600px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  // Tier badge. Carries its own text, so the colour is reinforcement and never
+  // the only signal.
+  .tier {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+
+    &.public { background: rgba(136, 132, 216, 0.2); color: #b6b3ee; }
+    &.members { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
+  }
+
+  .deleteBtn {
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 77, 79, 0.6);
+    border-radius: 4px;
+    background: transparent;
+    color: #ff9a9b;
+    cursor: pointer;
+    font-size: 13px;
+
+    &:hover { background: rgba(255, 77, 79, 0.15); }
+    &:focus-visible { outline: 2px solid #ff9a9b; outline-offset: 2px; }
+  }
+
+  // .confirmBackdrop / .confirmBox: lifted to src/styles/global.scss (shared
+  // with the Users page's confirm dialog). Kept out of this file so there is
+  // exactly one copy to maintain.
+}

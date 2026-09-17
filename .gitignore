@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+build
 *.local
 
 # Editor directories and files
@@ -17,8 +18,16 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
-.eslintrc.cjs
+# Every real env file, not just `.env` exactly - `.env.local`, `.env.atlas` and
+# friends carry credentials just as happily. The example is the one exception.
 .env
+.env.*
+!.env.example
+prod.env
+# Private keys and tokens, however they land in a working copy.
+*.pem
+*.key
+token*.json
 yarn.lock
 *.suo
 *.ntvs*
