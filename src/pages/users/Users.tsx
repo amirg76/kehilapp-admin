@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { Role, User, usersApi } from "../../api/kehilapp";
 import { errorMessage } from "../../services/http";
 import { useAuth } from "../../auth/AuthContext";
@@ -41,10 +42,76 @@ const dialogCopy = (action: PendingAction): { title: string; body: string; confi
             body: "המשתמש יקבל הרשאות ניהול מלאות: ניהול משתמשים, הודעות וקטגוריות.",
             confirmLabel: "הפוך למנהל",
           };
-    default:
-      // Exhaustiveness guard — TypeScript should never let this branch run.
-      return { title: "", body: "", confirmLabel: "" };
+    // No default: PendingAction["kind"] is a closed union of exactly these
+    // three, so removing the catch-all lets the type-checker refuse a new
+    // fourth kind added here without matching copy — the old default quietly
+    // rendered an empty-but-clickable dialog for that case instead of failing
+    // the build.
   }
+};
+
+/**
+ * Hebrew refusals for the server's admin-only business rules.
+ *
+ * `errorMessage` (services/http.ts) prefers the server's `data.error`, which
+ * is English (an API's job, not this screen's) — Login.tsx maps by HTTP
+ * status instead and never echoes it; these mappings follow the same
+ * pattern rather than inventing a second one.
+ *
+ * Two of the server's routes answer 400 for two different reasons apiece, and
+ * the JSON body is only ever `{ error: "<English sentence>" }` — no error
+ * code. Matching on that sentence would silently break the day someone
+ * rewords the English, so the discriminator here is what the CLIENT already
+ * knows about the request it just made (the target's role and id, weighed in
+ * the same order the backend does — usersController.js changeUserRole /
+ * revokeUser), never the response text.
+ */
+const isLastAdmin = (target: User | undefined, allUsers: User[]): boolean =>
+  target?.role === "admin" && allUsers.filter((u) => u.role === "admin").length <= 1;
+
+/** PATCH /api/users/:id/role — mirrors changeUserRole's own check order: the
+ * last-admin guard runs before the self guard, so a demotion that is both
+ * "self" and "last admin" must read as the last-admin refusal too. */
+const roleRefusalMessage = (targetId: string, target: User | undefined, allUsers: User[], meId?: string): string => {
+  if (isLastAdmin(target, allUsers)) {
+    return "לא ניתן להוריד בדרגה את המנהל האחרון שנותר — הלוח יישאר בלי אף אחד שיכול לנהל אותו. יש לקדם מנהל נוסף קודם.";
+  }
+  if (targetId === meId) {
+    return "מנהל אינו יכול לשנות את התפקיד של עצמו. יש לבקש ממנהל אחר לבצע זאת.";
+  }
+  return "שינוי התפקיד נכשל.";
+};
+
+/**
+ * PATCH /api/users/:id/revoke — revokeUser checks self before admin-target.
+ *
+ * The admin-target refusal is the one case where the CLIENT's own knowledge
+ * of the row is not reliable enough on its own: the revoke button is only
+ * ever offered for a row the client believes is a non-admin, so the only way
+ * to reach this refusal for real is a stale row — the target was promoted to
+ * admin in another tab or by another operator after this list was fetched,
+ * and `allUsers` here is exactly that same stale snapshot. So the primary
+ * signal is not prose but the one structural, non-prose thing the server's
+ * message happens to carry: the literal route it points at
+ * (`/api/users/:userId/role`, see usersController.js revokeUser) — a URL
+ * template is not English copy a rewording would touch. The client's own
+ * `target` is kept only as a fallback for a differently-worded server error
+ * that still names an admin target.
+ */
+const ADMIN_REVOKE_ROUTE_MARKER = "/api/users/:userId/role";
+const revokeRefusalMessage = (
+  targetId: string,
+  target: User | undefined,
+  meId: string | undefined,
+  serverText: string
+): string => {
+  if (targetId === meId) {
+    return "מנהל אינו יכול לבטל את האישור של עצמו.";
+  }
+  if (serverText.includes(ADMIN_REVOKE_ROUTE_MARKER) || target?.role === "admin") {
+    return "לא ניתן לבטל אישור של מנהל — הפעולה לא הייתה מסירה ממנו דבר. כדי להסיר הרשאות ניהול יש להפוך אותו לחבר, ורק אז אפשר לבטל את האישור אם עדיין רוצים.";
+  }
+  return "ביטול האישור נכשל.";
 };
 
 const Users = () => {
@@ -56,7 +123,15 @@ const Users = () => {
   // disable — a double click on a different row must still work.
   const [busyRowId, setBusyRowId] = useState<string | null>(null);
 
+  // Focus management for the confirm dialog: the element that opened it (so
+  // focus can return there on close) and the dialog box itself (so Tab can be
+  // trapped inside it).
+  const openerRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const cancelRef = useRef<HTMLButtonElement | null>(null);
+
   const users = useQuery({ queryKey: ["users"], queryFn: () => usersApi.list() });
+  const allUsers = users.data ?? [];
 
   const invalidateAndClear = () => {
     setActionError(null);
@@ -76,9 +151,18 @@ const Users = () => {
   const revoke = useMutation({
     mutationFn: (id: string) => usersApi.revoke(id),
     onSuccess: invalidateAndClear,
-    // Surfaces the server's 400 refusals verbatim: self-revoke and
-    // admin-revoke both explain themselves in the message (usersController.js).
-    onError: (err) => setActionError(errorMessage(err, "ביטול האישור נכשל.")),
+    // Mapped to fixed Hebrew by status + what the client already knows about
+    // the request (see revokeRefusalMessage above) — never the server's
+    // English prose, which errorMessage would otherwise prefer.
+    onError: (err, id) => {
+      const response = (err as AxiosError<{ error?: string }>)?.response;
+      if (response?.status === 400) {
+        const target = allUsers.find((u) => u._id === id);
+        setActionError(revokeRefusalMessage(id, target, me?.id, response.data?.error ?? ""));
+      } else {
+        setActionError(errorMessage(err, "ביטול האישור נכשל."));
+      }
+    },
     onSettled: () => {
       setPendingAction(null);
       setBusyRowId(null);
@@ -88,9 +172,18 @@ const Users = () => {
   const setRole = useMutation({
     mutationFn: ({ id, role }: { id: string; role: Role }) => usersApi.setRole(id, role),
     onSuccess: invalidateAndClear,
-    // Surfaces the server's 400 refusals: self-role-change and
-    // last-admin-demotion both explain themselves in the message.
-    onError: (err) => setActionError(errorMessage(err, "שינוי התפקיד נכשל.")),
+    // Mapped to fixed Hebrew by status + what the client already knows about
+    // the request (see roleRefusalMessage above) — never the server's
+    // English prose, which errorMessage would otherwise prefer.
+    onError: (err, variables) => {
+      const status = (err as AxiosError)?.response?.status;
+      if (status === 400) {
+        const target = allUsers.find((u) => u._id === variables.id);
+        setActionError(roleRefusalMessage(variables.id, target, allUsers, me?.id));
+      } else {
+        setActionError(errorMessage(err, "שינוי התפקיד נכשל."));
+      }
+    },
     onSettled: () => {
       setPendingAction(null);
       setBusyRowId(null);
@@ -99,15 +192,80 @@ const Users = () => {
 
   const isMutating = approve.isLoading || revoke.isLoading || setRole.isLoading;
 
+  /** Opens the confirm dialog, remembering the button that triggered it so
+   * focus can return there on close (SERIOUS 3). Also clears any error left
+   * over from a previous action, so a fresh attempt starts on a clean alert
+   * (SERIOUS 1) — otherwise an identical repeated failure never re-announces
+   * itself to a screen reader, because the DOM text under role="alert" never
+   * actually changes. */
+  const openDialog = (action: PendingAction, opener: HTMLElement) => {
+    openerRef.current = opener;
+    setActionError(null);
+    setPendingAction(action);
+  };
+
+  const closeDialog = () => {
+    setPendingAction(null);
+    const opener = openerRef.current;
+    openerRef.current = null;
+    // The opener may be gone (e.g. the row disappeared after invalidation);
+    // focusing a detached element is a silent no-op, never an error.
+    opener?.focus();
+  };
+
   const runPending = () => {
-    if (!pendingAction) return;
+    if (!pendingAction || isMutating) return;
+    setActionError(null);
     setBusyRowId(pendingAction.user._id);
     if (pendingAction.kind === "approve") approve.mutate(pendingAction.user._id);
     else if (pendingAction.kind === "revoke") revoke.mutate(pendingAction.user._id);
     else setRole.mutate({ id: pendingAction.user._id, role: pendingAction.role });
   };
 
-  const columns: GridColDef[] = [
+  // Move focus into the dialog when it opens (onto Cancel — the least
+  // dangerous default — never the destructive action), trap Tab inside it,
+  // and close on Escape.
+  useEffect(() => {
+    if (!pendingAction) return undefined;
+
+    cancelRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isMutating) return;
+        e.preventDefault();
+        closeDialog();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [pendingAction, isMutating]);
+
+  // Memoised: an identity that changes only when what a row can show actually
+  // changes, not on every render — a fresh array/object on every render was
+  // handing the DataGrid a "new" column set each time, which reset any column
+  // width the operator had dragged.
+  const columns: GridColDef[] = useMemo(
+    () => [
     { field: "name", headerName: "שם", width: 200 },
     { field: "email", headerName: "אימייל", width: 260 },
     {
@@ -173,28 +331,33 @@ const Users = () => {
             ariaLabel: `הפוך את ${row.name} לחבר`,
             action: { kind: "role", user: row, role: "member" },
           });
-        } else {
-          if (row.approved) {
-            buttons.push({
-              key: "revoke",
-              label: "בטל אישור",
-              ariaLabel: `בטל אישור עבור ${row.name}`,
-              action: { kind: "revoke", user: row },
-            });
-            buttons.push({
-              key: "promote",
-              label: "הפוך למנהל",
-              ariaLabel: `הפוך את ${row.name} למנהל`,
-              action: { kind: "role", user: row, role: "admin" },
-            });
-          } else {
-            buttons.push({
-              key: "approve",
-              label: "אשר",
-              ariaLabel: `אשר את ${row.name}`,
-              action: { kind: "approve", user: row },
-            });
-          }
+        } else if (row.approved) {
+          buttons.push({
+            key: "revoke",
+            label: "בטל אישור",
+            ariaLabel: `בטל אישור עבור ${row.name}`,
+            action: { kind: "revoke", user: row },
+          });
+          buttons.push({
+            key: "promote",
+            label: "הפוך למנהל",
+            ariaLabel: `הפוך את ${row.name} למנהל`,
+            action: { kind: "role", user: row, role: "admin" },
+          });
+        } else if (row.emailVerified) {
+          // "Pending" — the queue an admin actually admits people from — means
+          // verified but not yet approved, the same definition Home.tsx's tile
+          // counts by. An unverified account has not even proved the address is
+          // real, so there is nothing to admit yet: the server now refuses
+          // (400) an approve on an unverified account (usersController.js
+          // approveUser), and the button is withheld here the same way the
+          // revoke-an-admin button is withheld above.
+          buttons.push({
+            key: "approve",
+            label: "אשר",
+            ariaLabel: `אשר את ${row.name}`,
+            action: { kind: "approve", user: row },
+          });
         }
 
         return (
@@ -206,7 +369,7 @@ const Users = () => {
                 className={`actionBtn ${b.key}`}
                 disabled={rowBusy}
                 aria-label={b.ariaLabel}
-                onClick={() => setPendingAction(b.action)}
+                onClick={(e) => openDialog(b.action, e.currentTarget)}
               >
                 {b.label}
               </button>
@@ -215,7 +378,9 @@ const Users = () => {
         );
       },
     },
-  ];
+    ],
+    [me, busyRowId, isMutating]
+  );
 
   if (users.isError) {
     return (
@@ -261,18 +426,24 @@ const Users = () => {
 
       {pendingAction && (
         <div className="confirmBackdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-          <div className="confirmBox">
+          <div className="confirmBox" ref={dialogRef}>
             <h2 id="confirmTitle">{dialogCopy(pendingAction).title}</h2>
             <p className="target">{pendingAction.user.name}</p>
             <p className="warn">{dialogCopy(pendingAction).body}</p>
             <div className="actions">
-              <button type="button" onClick={() => setPendingAction(null)} disabled={isMutating}>
+              <button type="button" ref={cancelRef} onClick={closeDialog} disabled={isMutating}>
                 ביטול
               </button>
               <button
                 type="button"
                 className="danger"
-                disabled={isMutating}
+                aria-disabled={isMutating}
+                // Never the native `disabled` attribute here: this is the
+                // button the operator just clicked and it holds focus. The
+                // native attribute would drop focus to <body> the instant the
+                // mutation starts (SERIOUS 3) — aria-disabled keeps it
+                // focusable and announced as unavailable, and runPending
+                // itself is the real re-entrancy guard.
                 onClick={runPending}
               >
                 {isMutating ? "מבצע…" : dialogCopy(pendingAction).confirmLabel}
