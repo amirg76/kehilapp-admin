@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/home/Home";
 import Users from "./pages/users/Users";
 import Messages from "./pages/messages/Messages";
+import NewMessage from "./pages/messages/NewMessage";
 import Login from "./pages/login/Login";
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./components/footer/Footer";
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/users", element: <Users /> },
       { path: "/messages", element: <Messages /> },
+      { path: "/messages/new", element: <NewMessage /> },
     ],
   },
   { path: "/login", element: <Login /> },

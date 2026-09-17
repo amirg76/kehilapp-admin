@@ -68,6 +68,20 @@ export const authApi = {
   logout: () => http.post("/api/auth/logout").then(() => undefined),
 };
 
+/**
+ * Mirrors the backend's Joi schema in
+ * src/config/validationConstants.js (messageConstants) — keep these numbers in
+ * step with that file, not the other way around.
+ */
+export const MESSAGE_LIMITS = { titleMin: 2, titleMax: 25, textMax: 1500 } as const;
+
+export type MessageInput = {
+  categoryId: string;
+  title: string;
+  text: string;
+  visibility: "public" | "members";
+};
+
 export const messagesApi = {
   list: (params: { page?: number; limit?: number; searchTerm?: string; categoryId?: string } = {}) =>
     http.get<Message[]>("/api/messages", { params }).then(
@@ -78,6 +92,9 @@ export const messagesApi = {
     ),
 
   byId: (id: string) => http.get<Message>(`/api/messages/${id}`).then((r) => r.data),
+
+  /** JSON body — no multipart needed here, unlike the attachment-bearing update path. */
+  create: (input: MessageInput) => http.post<Message>("/api/messages", input).then((r) => r.data),
 
   /** Admin-only on the server; the UI hides it for members, the API enforces it. */
   remove: (id: string) => http.delete(`/api/messages/${id}`).then(() => id),

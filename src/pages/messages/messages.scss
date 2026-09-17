@@ -3,12 +3,27 @@
 
   .info {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     margin-bottom: 20px;
 
     h1 { margin: 0; font-size: 24px; }
-    .count { color: #a1a1a1; font-size: 14px; }
+    .count { color: #a1a1a1; font-size: 14px; margin-inline-end: auto; }
+
+    .newMessageBtn {
+      padding: 8px 16px;
+      border-radius: 5px;
+      background: #8884d8;
+      color: #fff;
+      font-size: 14px;
+      text-decoration: none;
+      white-space: nowrap;
+
+      &:hover { opacity: 0.9; }
+      &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    }
   }
 
   .error {
@@ -19,6 +34,26 @@
     border: 1px solid rgba(255, 77, 79, 0.5);
     color: #ffb3b4;
     font-size: 14px;
+  }
+
+  .status {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background: rgba(136, 132, 216, 0.15);
+    border: 1px solid rgba(136, 132, 216, 0.5);
+    color: #d6d4f7;
+    font-size: 14px;
+
+    // The live region is always in the DOM so a screen reader announces the
+    // text that lands in it later. Empty, it must occupy nothing: collapsed
+    // rather than hidden, because display:none would drop it from the
+    // accessibility tree and the announcement with it.
+    &:empty {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
   }
 
   .dataTable { height: 600px; }

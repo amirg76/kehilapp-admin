@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { categoriesApi, Message, messagesApi } from "../../api/kehilapp";
@@ -10,8 +11,25 @@ const formatDate = (value?: string) =>
 
 const Messages = () => {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
+
+  // Arrives after a successful publish from NewMessage.tsx. React Router
+  // restores history.state.usr on a refresh or Back navigation, so this DOES
+  // survive a reload — it is cleared below after the first render so a stale
+  // "published" notice cannot resurface on F5 or Back.
+  const publishedTitle = (location.state as { publishedTitle?: string } | null)?.publishedTitle;
+
+  // Clear the state once it has been shown, so a refresh or Back navigation
+  // does not re-announce a publish from minutes ago. Runs only when
+  // publishedTitle actually changes, so it cannot loop against itself.
+  useEffect(() => {
+    if (publishedTitle) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [publishedTitle, location.pathname, navigate]);
 
   // The board is small (tens of messages), so one page of 200 is both the whole
   // dataset and cheaper than paging. Revisit if the community ever outgrows it.
@@ -117,6 +135,13 @@ const Messages = () => {
         <span className="count">
           {messages.isLoading ? "טוען…" : `${messages.data?.total ?? 0} הודעות`}
         </span>
+        <Link className="newMessageBtn" to="/messages/new">
+          הודעה חדשה
+        </Link>
+      </div>
+
+      <div className="status" role="status">
+        {publishedTitle && <>ההודעה &quot;{publishedTitle}&quot; פורסמה</>}
       </div>
 
       {actionError && (
