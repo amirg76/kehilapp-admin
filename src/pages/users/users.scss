@@ -20,7 +20,15 @@
     font-size: 14px;
   }
 
-  .dataTable { height: 600px; }
+  .dataTable {
+    height: 600px;
+    // The DataGrid already has several columns and this page adds two more
+    // (status + a wider actions column) — on a narrow phone the grid's own
+    // horizontal scroller is what absorbs that, not the page. The container
+    // itself never overflows the viewport width.
+    max-width: 100%;
+    overflow-x: auto;
+  }
 
   .role {
     padding: 2px 10px;
@@ -29,5 +37,52 @@
 
     &.admin { background: rgba(136, 132, 216, 0.25); color: #b6b3ee; }
     &.member { background: rgba(255, 255, 255, 0.08); color: #ccc; }
+  }
+
+  // Approval status badge. Same treatment as the messages table's .tier:
+  // carries its own text, so colour is reinforcement, never the only signal.
+  .tier {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+
+    &.approved { background: rgba(76, 217, 100, 0.18); color: #7de08f; }
+    &.pending { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
+  }
+
+  .rowActions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .actionBtn {
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+
+    &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    // Approve / promote: affirmative actions, same purple accent used
+    // elsewhere on this page (.role.admin, .newMessageBtn on Messages).
+    &.approve,
+    &.promote {
+      border: 1px solid rgba(136, 132, 216, 0.6);
+      color: #b6b3ee;
+      &:hover { background: rgba(136, 132, 216, 0.15); }
+    }
+
+    // Revoke / demote: taking something away — same red accent as the
+    // messages table's delete button.
+    &.revoke,
+    &.demote {
+      border: 1px solid rgba(255, 77, 79, 0.6);
+      color: #ff9a9b;
+      &:hover { background: rgba(255, 77, 79, 0.15); }
+    }
   }
 }

@@ -82,43 +82,7 @@
     &:focus-visible { outline: 2px solid #ff9a9b; outline-offset: 2px; }
   }
 
-  .confirmBackdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-  }
-
-  .confirmBox {
-    background: #2a3447;
-    padding: 24px;
-    border-radius: 8px;
-    max-width: 400px;
-
-    h2 { margin: 0 0 12px; font-size: 18px; }
-    .target { margin: 0 0 8px; color: #ddd; font-weight: 600; }
-    .warn { margin: 0 0 20px; color: #ffb3b4; font-size: 13px; }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-start;
-
-      button {
-        padding: 8px 18px;
-        border: 1px solid #4a5568;
-        border-radius: 5px;
-        background: transparent;
-        color: #fff;
-        cursor: pointer;
-
-        &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
-        &.danger { background: #c0392b; border-color: #c0392b; }
-        &:disabled { opacity: 0.6; cursor: not-allowed; }
-      }
-    }
-  }
+  // .confirmBackdrop / .confirmBox: lifted to src/styles/global.scss (shared
+  // with the Users page's confirm dialog). Kept out of this file so there is
+  // exactly one copy to maintain.
 }

@@ -23,6 +23,14 @@ const Home = () => {
   const membersOnly = items.filter((m) => m.visibility === "members").length;
   const publicCount = items.length - membersOnly;
 
+  // Verified their email but not yet admitted by an admin — the queue this
+  // tile exists to surface. Admins are excluded: an admin account's approval
+  // state doesn't gate anything for them (every auth check bypasses on role),
+  // so counting them here would inflate a number that isn't actually a queue.
+  const pendingApprovalCount = accounts.filter(
+    (u) => u.role !== "admin" && u.emailVerified && !u.approved
+  ).length;
+
   const loading = messages.isLoading || users.isLoading || categories.isLoading;
   const firstError = messages.error ?? users.error ?? categories.error;
 
@@ -41,6 +49,11 @@ const Home = () => {
       label: "מאומתי אימייל",
       value: String(accounts.filter((u) => u.emailVerified).length),
       hint: `מתוך ${accounts.length} חשבונות`,
+    },
+    {
+      label: "ממתינים לאישור",
+      value: String(pendingApprovalCount),
+      hint: "אימתו אימייל, טרם אושרו ע\"י מנהל",
     },
     {
       label: "קטגוריות",

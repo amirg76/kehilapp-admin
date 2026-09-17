@@ -10,6 +10,14 @@ export type User = {
   role?: Role;
   emailVerified?: boolean;
   createdAt?: string;
+  // Approval tier: a human admission decision, separate from email verification.
+  // Exactly one of the approved/revoked pairs is ever set — the server clears
+  // the other, so these say which decision was last (see userModel.js).
+  approved?: boolean;
+  approvedAt?: string;
+  approvedBy?: string;
+  revokedAt?: string;
+  revokedBy?: string;
 };
 
 export type Category = {
@@ -42,6 +50,7 @@ export type SessionUser = {
   name: string;
   email: string;
   role: Role;
+  approved?: boolean;
 };
 
 /**
@@ -108,4 +117,26 @@ export const usersApi = {
   /** Admin-only: the one endpoint that returns every account at once. */
   list: () => http.get<User[]>("/api/users").then((r) => r.data),
   byId: (id: string) => http.get<User>(`/api/users/${id}`).then((r) => r.data),
+
+  /**
+   * Admits an account to the community. Server refuses (400) revoking an
+   * admin's own approval too, but approve carries no such refusal.
+   * Response shape confirmed at usersController.js's toSafeUser (approveUser).
+   */
+  approve: (id: string) => http.patch<User>(`/api/users/${id}/approve`).then((r) => r.data),
+
+  /**
+   * Withdraws approval. Server refuses (400) revoking your own approval, and
+   * refuses (400) revoking an admin's approval — it would take nothing away.
+   * Response shape confirmed at usersController.js's toSafeUser (revokeUser).
+   */
+  revoke: (id: string) => http.patch<User>(`/api/users/${id}/revoke`).then((r) => r.data),
+
+  /**
+   * Promotes or demotes. Server refuses (400) changing your own role, and
+   * refuses (400) demoting the last remaining admin.
+   * Response shape confirmed at usersController.js's toSafeUser (changeUserRole).
+   */
+  setRole: (id: string, role: Role) =>
+    http.patch<User>(`/api/users/${id}/role`, { role }).then((r) => r.data),
 };
