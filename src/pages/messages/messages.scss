@@ -56,7 +56,15 @@
     }
   }
 
-  .dataTable { height: 600px; }
+  // Same containment the users table has: the grid is wider than a phone, and
+  // its own horizontal scroller is what should absorb that -- not the page.
+  // Fixing one table and leaving its twin sideways-scrolling would be worse
+  // than fixing neither, since the difference would read as a layout bug.
+  .dataTable {
+    height: 600px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
 
   // Tier badge. Carries its own text, so the colour is reinforcement and never
   // the only signal.

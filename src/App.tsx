@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Home from "./pages/home/Home";
 import Users from "./pages/users/Users";
 import Messages from "./pages/messages/Messages";
@@ -11,6 +12,21 @@ import Menu from "./components/menu/Menu";
 import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 import { AuthProvider } from "./auth/AuthContext";
 import "./styles/global.scss";
+
+// The app is dark-themed everywhere via CSS (see styles/variables.scss), but
+// the two DataGrid pages (Users, Messages) render real MUI components
+// (GridToolbar's buttons, column menus, the grid's own text) with no
+// ThemeProvider above them — so MUI fell back to its LIGHT palette defaults
+// (near-black text) on top of this app's dark background. An axe scan caught
+// it as a 1.61:1 color-contrast violation on both pages (WCAG requires
+// 4.5:1). A single dark theme, scoped once at the app root, fixes every MUI
+// surface at once instead of hand-picking colors per column.
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    background: { default: "#2a3447", paper: "#2a3447" },
+  },
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,11 +86,13 @@ const router = createBrowserRouter([
  * query context at all.
  */
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
-  </QueryClientProvider>
+  <ThemeProvider theme={theme}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

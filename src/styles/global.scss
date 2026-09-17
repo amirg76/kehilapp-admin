@@ -35,6 +35,14 @@ a {
 .contentContainer {
   padding: 5px 20px;
   width: 100%;
+  // Flex items default to min-width:auto, which floors their shrink at their
+  // content's intrinsic (min-content) width — so a wide DataGrid inside this
+  // container was preventing the container itself from shrinking below the
+  // grid's own width, and the PAGE grew instead of the grid's own
+  // overflow-x:auto ever kicking in. min-width:0 removes that floor so the
+  // grid's own horizontal scroller (see .dataTable in users.scss) is what
+  // absorbs the overflow, not the page.
+  min-width: 0;
 }
 
 // Confirm dialog. Was nested under .messages (messages.scss) — lifted here so
