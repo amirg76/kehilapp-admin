@@ -80,6 +80,21 @@
     &.members { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
   }
 
+  // Urgency badge, same shape as .tier above. Like .tier it carries its own
+  // Hebrew word, so the colour only reinforces a distinction the text already
+  // makes — a reader who cannot separate amber from red still gets the answer.
+  // No width or margin of its own: it sits inside a fixed-width grid cell, and
+  // the grid's own horizontal scroller (.dataTable) absorbs the total width.
+  .urgencyTag {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+
+    &.routine { background: rgba(255, 255, 255, 0.08); color: #c7cedb; }
+    &.important { background: rgba(96, 165, 250, 0.18); color: #9ecbff; }
+    &.urgent { background: rgba(255, 77, 79, 0.18); color: #ff9a9b; }
+  }
+
   .deleteBtn {
     padding: 4px 12px;
     border: 1px solid rgba(255, 77, 79, 0.6);

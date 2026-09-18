@@ -73,6 +73,20 @@ api.interceptors.response.use(
   }
 );
 
+/**
+ * The HTTP status of a failed request, or null when the request never got an
+ * answer (network down, CORS refusal, aborted).
+ *
+ * Exists so callers can branch on the status instead of matching on the text
+ * `errorMessage` returns. That text comes from the server, is not guaranteed
+ * to be Hebrew, and changes without warning — branching on it produces a UI
+ * that breaks on a backend copy edit and shows English to the admin.
+ */
+export const errorStatus = (error: unknown): number | null => {
+  const err = error as AxiosError;
+  return err?.response?.status ?? null;
+};
+
 /** Pulls a human-readable message out of the API's error envelope. */
 export const errorMessage = (error: unknown, fallback: string): string => {
   const err = error as AxiosError<{ message?: string; error?: string }>;

@@ -76,12 +76,72 @@
 
         &.error { color: #ffb3b4; }
       }
+
+      // The select and the "suggest" button share one line when there is room
+      // and stack when there is not.
+      .categoryRow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+
+        select {
+          // min-width:0 is load-bearing, not decoration: a flex item defaults
+          // to min-width:auto, which refuses to shrink past its content's
+          // intrinsic width. A category title longer than the remaining space
+          // would then push this row — and the page — wider than the viewport,
+          // which is exactly the horizontal-overflow bug the tables already
+          // had fixed in .contentContainer (src/styles/global.scss).
+          flex: 1 1 200px;
+          width: auto;
+          min-width: 0;
+        }
+      }
+    }
+
+    .suggestBtn {
+      flex: 0 0 auto;
+      padding: 10px 14px;
+      border: 1px solid #615cb8;
+      border-radius: 5px;
+      background: transparent;
+      color: #c9c6f2;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+
+      &:hover:not(:disabled) { background: rgba(136, 132, 216, 0.15); }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+      &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+    }
+
+    // Deliberately NOT styled like .error: a suggestion that arrived is a
+    // normal result, and a failed suggestion still leaves the form fully
+    // usable. Red here would tell the admin something broke when nothing did.
+    .suggestion {
+      padding: 10px 12px;
+      border-radius: 5px;
+      background: rgba(136, 132, 216, 0.12);
+      border: 1px solid rgba(136, 132, 216, 0.45);
+      font-size: 14px;
+
+      p { margin: 0; }
+      p + p { margin-top: 6px; }
+
+      .headline { color: #d6d4f7; font-weight: 600; }
+      .reason { color: #ddd; }
+      .disclaimer { color: #a1a1a1; font-size: 12px; }
     }
 
     // The security model made visible: which of the two radios is picked
     // decides who can read the message, so this gets a full fieldset rather
-    // than being folded into a plain select.
-    .visibility {
+    // than being folded into a plain select. .urgency shares the styling
+    // because it is the same control — a small set of named choices where each
+    // one needs its meaning spelled out next to it.
+    .visibility,
+    .urgency {
       border: 1px solid #384256;
       border-radius: 5px;
       padding: 12px;
@@ -105,6 +165,15 @@
         cursor: pointer;
 
         input { cursor: pointer; }
+      }
+
+      // Each urgency choice wraps its radio and its hint together; the
+      // visibility fieldset lists them as flat siblings instead, so this rule
+      // has to restore the spacing the parent gap gives those siblings.
+      .option {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
 
       .hint {

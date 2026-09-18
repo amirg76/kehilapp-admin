@@ -2,9 +2,24 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { categoriesApi, Message, messagesApi } from "../../api/kehilapp";
+import { categoriesApi, Message, messagesApi, Urgency } from "../../api/kehilapp";
 import { errorMessage } from "../../services/http";
 import "./messages.scss";
+
+/**
+ * Hebrew for the server's urgency enum. Messages written before the field
+ * shipped have no urgency at all, and the server's default for those is
+ * "routine" — so an absent value is read as routine here rather than shown as
+ * an em-dash, which would read as "unknown" when it is not.
+ */
+const URGENCY_LABELS: Record<Urgency, string> = {
+  routine: "שגרה",
+  important: "חשוב",
+  urgent: "דחוף",
+};
+
+const urgencyOf = (value?: string): Urgency =>
+  value === "important" || value === "urgent" ? value : "routine";
 
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleDateString("he-IL", { dateStyle: "medium" }) : "—";
@@ -81,6 +96,19 @@ const Messages = () => {
         <span className={`tier ${params.row.visibility === "members" ? "members" : "public"}`}>
           {params.row.visibility === "members" ? "חברים בלבד" : "ציבורי"}
         </span>
+      ),
+    },
+    {
+      field: "urgency",
+      headerName: "דחיפות",
+      width: 110,
+      // valueGetter returns the Hebrew label, not the raw enum, so sorting and
+      // the toolbar's quick filter operate on what the admin can actually see.
+      // renderCell then receives that label as params.value and only adds the
+      // badge around it.
+      valueGetter: (params) => URGENCY_LABELS[urgencyOf(params.row.urgency)],
+      renderCell: (params) => (
+        <span className={`urgencyTag ${urgencyOf(params.row.urgency)}`}>{params.value}</span>
       ),
     },
     {

@@ -20,6 +20,14 @@ export type User = {
   revokedBy?: string;
 };
 
+/**
+ * Mirrors the server's `urgency` enum on the message document. The server
+ * defaults it to "routine", so an older message written before the field
+ * existed still reads as routine rather than as an absent value the UI has to
+ * invent a meaning for.
+ */
+export type Urgency = "routine" | "important" | "urgent";
+
 export type Category = {
   _id: string;
   title: string;
@@ -38,6 +46,10 @@ export type Message = {
   // callers entirely. Pinning is deliberately NOT here — it is a per-browser
   // preference in the resident app (localStorage), never a server field.
   visibility?: "public" | "members";
+  // Optional here for the same reason `visibility` is: this type describes what
+  // the server may send, and a document stored before the field shipped has no
+  // urgency on it. Readers must fall back to "routine", the server's default.
+  urgency?: Urgency;
   createdAt?: string;
   updatedAt?: string;
   attachmentName?: string;
@@ -89,6 +101,23 @@ export type MessageInput = {
   title: string;
   text: string;
   visibility: "public" | "members";
+  // Required on the way out even though the server defaults it: the compose
+  // form always holds a concrete choice, and making it optional here would let
+  // a caller silently drop the admin's pick and get "routine" back instead.
+  urgency: Urgency;
+};
+
+/**
+ * The 200 body of POST /api/messages/classify. `categoryId` is a suggestion
+ * only — it is not guaranteed to be one of the categories this client has
+ * loaded, so callers must check before assigning it to a <select>.
+ * `reason` is one short Hebrew sentence, meant to be shown verbatim.
+ */
+export type MessageClassification = {
+  categoryId: string;
+  categoryTitle: string;
+  urgency: Urgency;
+  reason: string;
 };
 
 export const messagesApi = {
@@ -107,6 +136,22 @@ export const messagesApi = {
 
   /** Admin-only on the server; the UI hides it for members, the API enforces it. */
   remove: (id: string) => http.delete(`/api/messages/${id}`).then(() => id),
+
+  /**
+   * Asks the server to suggest a category and an urgency for a draft. A POST,
+   * so it picks up the `X-CSRF-Token` interceptor in services/http.ts like
+   * every other mutating call — even though it writes nothing, because the
+   * call costs the community real money per invocation and must not be
+   * triggerable cross-site.
+   *
+   * Callers must handle these by STATUS, not by the message text:
+   *   503 — the feature has no API key on this server. The normal "off" state.
+   *   429 — the per-caller rate limiter that guards that cost.
+   */
+  classify: (input: { title: string; text?: string }) =>
+    http
+      .post<MessageClassification>("/api/messages/classify", input)
+      .then((r) => r.data),
 };
 
 export const categoriesApi = {
