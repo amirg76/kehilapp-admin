@@ -34,3 +34,14 @@ yarn.lock
 *.njsproj
 *.sln
 *.sw?
+
+# The rest of the secrets-and-keys block the sibling repos carry. A scan before
+# pushing found this repo was missing these four while the backend and the front
+# had them: `check-ignore id_rsa` here returned nothing, so a key file with no
+# extension would have staged. Nothing of the sort exists in this tree today --
+# the point is that it can no longer arrive by accident in the one of the three
+# repos that was not covered.
+secrets/
+*.p12
+*credentials*.json
+id_rsa
