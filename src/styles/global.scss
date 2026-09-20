@@ -1,3 +1,4 @@
+@import "./tokens.scss";
 @import "./variables.scss";
 @import "./responsive.scss";
 
@@ -7,34 +8,113 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  // The canvas has to be painted on the element that actually fills the
+  // viewport. .main is a child and stops where the content stops, so on a short
+  // page the browser's own white was showing below the footer in dark mode.
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
 a {
   text-decoration: none;
   color: inherit;
 }
 
+// One focus ring for the whole app, defined once. Every component below that
+// wants a different offset overrides the offset, never the colour — a ring that
+// changes hue per component reads as an accident.
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .main {
-  font-family: "Inter", sans-serif;
-  background-color: $main-bg;
-  color: $main-color;
+  font-family: var(--font);
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
   display: flex;
+  flex: 1;
+  gap: var(--space-5);
+  padding: 0 var(--space-5) var(--space-5);
+  align-items: flex-start;
+
+  @include lg {
+    gap: var(--space-3);
+    padding: 0 var(--space-3) var(--space-4);
+  }
+
+  // Phone and small tablet: the sidebar becomes a strip above the content
+  // instead of a column beside it. Same three destinations, same order, all
+  // still visible — but at 375px a side column was taking a quarter of the
+  // width and leaving the tables about 245px to live in.
+  @include md {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .menuContainer {
-  width: 250px;
-  padding: 5px 20px;
-  border-right: 2px solid $soft-bg;
+  width: 236px;
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-3);
+  // The sidebar is a raised surface now rather than a hairline rule, which is
+  // what separates it from the content column at a glance instead of on
+  // inspection. position:sticky keeps it in view on a long grid page.
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  position: sticky;
+  top: var(--space-4);
 
-  @include lg{
+  @include lg {
     width: max-content;
+    min-width: 0;
+    padding: var(--space-3) var(--space-2);
+  }
+
+  @include md {
+    width: 100%;
+    // Not sticky once it is a horizontal strip: a bar pinned to the top of a
+    // phone viewport costs more of the screen than it is worth on a page whose
+    // whole point is a scrolling table.
+    position: static;
+    padding: var(--space-2) var(--space-3);
   }
 }
 
 .contentContainer {
-  padding: 5px 20px;
+  padding: var(--space-4) var(--space-5);
   width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
   // Flex items default to min-width:auto, which floors their shrink at their
   // content's intrinsic (min-content) width — so a wide DataGrid inside this
   // container was preventing the container itself from shrinking below the
@@ -43,57 +123,103 @@ a {
   // grid's own horizontal scroller (see .dataTable in users.scss) is what
   // absorbs the overflow, not the page.
   min-width: 0;
+
+  @include lg {
+    padding: var(--space-4) var(--space-3);
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Page-level primitives, shared by every page so the four screens read as one
+// product. These replace the per-page copies of the same block that had already
+// started to drift apart (three different reds for the same error box).
+// ---------------------------------------------------------------------------
+
+// (The page-head / error-box / chip / button recipes live in mixins.scss, which
+// every page imports. They are mixins rather than classes here because a SCSS
+// placeholder or class defined in THIS file would only be reachable by
+// importing the whole global stylesheet into every page — i.e. four more copies
+// of everything below.)
 
 // Confirm dialog. Was nested under .messages (messages.scss) — lifted here so
 // any page can reuse the same "are you sure" pattern (Users needs it too).
-// Not verbatim: `direction: rtl` was added to .confirmBox, since this file no
-// longer nests under a .messages wrapper that already carried it. In practice
-// it is a no-op (the page is already RTL end to end), but it is a real
-// addition and the comment should not claim otherwise. Everything else here
-// is unchanged, and nothing referenced a .messages-scoped variable or sibling.
 .confirmBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  // A scrim strong enough that the dialog is unambiguously the foreground; the
+  // blur is what tells the eye the layer behind is out of reach, not decoration.
+  background: var(--scrim);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-4);
   z-index: 50;
 }
 
 .confirmBox {
-  background: #2a3447;
-  padding: 24px;
-  border-radius: 8px;
-  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  max-width: 420px;
+  width: 100%;
   direction: rtl;
 
-  h2 { margin: 0 0 12px; font-size: 18px; }
-  .target { margin: 0 0 8px; color: #ddd; font-weight: 600; }
-  .warn { margin: 0 0 20px; color: #ffb3b4; font-size: 13px; }
+  h2 {
+    margin: 0 0 var(--space-3);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .target {
+    margin: 0 0 var(--space-2);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .warn {
+    margin: 0 0 var(--space-5);
+    color: var(--danger-text);
+    font-size: var(--fs-sm);
+  }
 
   .actions {
     display: flex;
-    gap: 10px;
+    gap: var(--space-3);
     justify-content: flex-start;
 
     button {
-      padding: 8px 18px;
-      border: 1px solid #4a5568;
-      border-radius: 5px;
-      background: transparent;
-      color: #fff;
+      padding: var(--space-2) var(--space-5);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: var(--fs-base);
+      font-weight: 500;
       cursor: pointer;
+      // 44px is the touch-target floor; these two are the most consequential
+      // buttons in the app and were 33px tall.
+      min-height: 44px;
+      transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 
-      &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
-      &.danger { background: #c0392b; border-color: #c0392b; }
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
+      &:hover { background: var(--surface-2); }
+      &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      &.danger {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+        &:hover { background: #971d14; }
+      }
+
+      &:disabled { opacity: 0.55; cursor: not-allowed; }
       // aria-disabled, not the native attribute: the confirm button holds
       // focus at the moment the mutation starts, and a native `disabled`
       // would drop that focus to <body> (see Users.tsx). Same look, without
       // removing it from the focus order.
-      &[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+      &[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
     }
   }
 }
@@ -106,11 +232,12 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 24px;
+  gap: var(--space-2);
+  padding: var(--space-6);
   text-align: center;
-  color: #ddd;
+  background: var(--bg);
+  color: var(--text-2);
 
-  h2 { margin: 0; }
-  p { margin: 0; color: #a1a1a1; }
+  h2 { margin: 0; color: var(--text); font-size: var(--fs-lg); }
+  p { margin: 0; color: var(--text-3); }
 }

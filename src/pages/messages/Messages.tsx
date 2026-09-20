@@ -2,24 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { categoriesApi, Message, messagesApi, Urgency } from "../../api/kehilapp";
+import { categoriesApi, Message, messagesApi } from "../../api/kehilapp";
 import { errorMessage } from "../../services/http";
+// The Hebrew labels for the server's urgency enum, and the reader that treats an
+// absent value as "routine". Lifted out of this file and NewMessage.tsx once the
+// edit form needed the same three levels — see the comment there for why a third
+// hand-written copy is a drift waiting to happen.
+import { urgencyLabel, urgencyOf } from "./urgencyOptions";
 import "./messages.scss";
-
-/**
- * Hebrew for the server's urgency enum. Messages written before the field
- * shipped have no urgency at all, and the server's default for those is
- * "routine" — so an absent value is read as routine here rather than shown as
- * an em-dash, which would read as "unknown" when it is not.
- */
-const URGENCY_LABELS: Record<Urgency, string> = {
-  routine: "שגרה",
-  important: "חשוב",
-  urgent: "דחוף",
-};
-
-const urgencyOf = (value?: string): Urgency =>
-  value === "important" || value === "urgent" ? value : "routine";
 
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleDateString("he-IL", { dateStyle: "medium" }) : "—";
@@ -35,16 +25,48 @@ const Messages = () => {
   // restores history.state.usr on a refresh or Back navigation, so this DOES
   // survive a reload — it is cleared below after the first render so a stale
   // "published" notice cannot resurface on F5 or Back.
-  const publishedTitle = (location.state as { publishedTitle?: string } | null)?.publishedTitle;
+  // `savedTitle` is the same mechanism from EditMessage.tsx. Two keys rather
+  // than one shared one because the two sentences are not interchangeable:
+  // "published" says a message now exists that did not before, which is exactly
+  // what an admin who only edited one must not be told.
+  const routeState = location.state as { publishedTitle?: string; savedTitle?: string } | null;
+  const publishedTitle = routeState?.publishedTitle;
+  const savedTitle = routeState?.savedTitle;
 
-  // Clear the state once it has been shown, so a refresh or Back navigation
-  // does not re-announce a publish from minutes ago. Runs only when
-  // publishedTitle actually changes, so it cannot loop against itself.
+  // The banner is rendered from COMPONENT state, not from the route state.
+  //
+  // It used to be rendered straight from `location.state`, and the effect below
+  // cleared that state on the first render — so the notice was destroyed in the
+  // same tick it appeared and no admin ever read it, on either the publish flow
+  // or the edit flow. Copying it here first keeps both things: the sentence
+  // survives the clearing, and the route state is still emptied, so a refresh or
+  // a Back navigation cannot re-announce a publish from minutes ago (React
+  // Router restores history.state.usr, which is what made that possible).
+  const [notice, setNotice] = useState<string | null>(null);
+
   useEffect(() => {
-    if (publishedTitle) {
-      navigate(location.pathname, { replace: true, state: null });
-    }
-  }, [publishedTitle, location.pathname, navigate]);
+    if (!publishedTitle && !savedTitle) return;
+    // Two sentences, not one shared one: "פורסמה" says a message now exists
+    // that did not before, which an admin who only edited one must not be told.
+    setNotice(
+      publishedTitle
+        ? `ההודעה "${publishedTitle}" פורסמה`
+        : `השינויים בהודעה "${savedTitle}" נשמרו`
+    );
+    navigate(location.pathname, { replace: true, state: null });
+  }, [publishedTitle, savedTitle, location.pathname, navigate]);
+
+  // Auto-dismissal, as a backstop to the explicit close button below — a banner
+  // that never leaves on its own is still on screen next time the admin looks at
+  // the grid and stops meaning anything. Ten seconds because the notice is a
+  // full Hebrew sentence carrying a message title, and a two- or three-second
+  // toast is a sentence the reader is still in the middle of. Cleared on unmount
+  // so a timer cannot fire setState on a page that has already been left.
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = window.setTimeout(() => setNotice(null), 10000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   // The board is small (tens of messages), so one page of 200 is both the whole
   // dataset and cheaper than paging. Revisit if the community ever outgrows it.
@@ -106,7 +128,7 @@ const Messages = () => {
       // the toolbar's quick filter operate on what the admin can actually see.
       // renderCell then receives that label as params.value and only adds the
       // badge around it.
-      valueGetter: (params) => URGENCY_LABELS[urgencyOf(params.row.urgency)],
+      valueGetter: (params) => urgencyLabel(urgencyOf(params.row.urgency)),
       renderCell: (params) => (
         <span className={`urgencyTag ${urgencyOf(params.row.urgency)}`}>{params.value}</span>
       ),
@@ -128,20 +150,35 @@ const Messages = () => {
     {
       field: "action",
       headerName: "פעולות",
-      width: 110,
+      width: 170,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <button
-          className="deleteBtn"
-          type="button"
-          onClick={() => setPendingDelete(params.row as Message)}
-          // A real label, not an icon alone — the icon-only button in the
-          // template announced nothing at all to a screen reader.
-          aria-label={`מחק את ההודעה ${params.row.title}`}
-        >
-          מחק
-        </button>
+        <div className="rowActions">
+          {/* A Link, not a button with navigate(): the edit form has a real URL,
+              so this has to be something the admin can open in a new tab and
+              something a screen reader announces as a link to a place. */}
+          <Link
+            className="editBtn"
+            to={`/messages/${params.row._id}/edit`}
+            // Both controls carry the message title, because "ערוך"/"מחק" alone
+            // is what an admin tabbing through the grid hears twenty-five times
+            // with no idea which row they are on.
+            aria-label={`ערוך את ההודעה ${params.row.title}`}
+          >
+            ערוך
+          </Link>
+          <button
+            className="deleteBtn"
+            type="button"
+            onClick={() => setPendingDelete(params.row as Message)}
+            // A real label, not an icon alone — the icon-only button in the
+            // template announced nothing at all to a screen reader.
+            aria-label={`מחק את ההודעה ${params.row.title}`}
+          >
+            מחק
+          </button>
+        </div>
       ),
     },
   ];
@@ -168,8 +205,27 @@ const Messages = () => {
         </Link>
       </div>
 
+      {/* The live region itself is always mounted — see messages.scss — because
+          a screen reader announces text that LANDS in a region already in the
+          accessibility tree, not a region that appears together with its text.
+          role="status" (polite) and not role="alert" like the error below: this
+          is a confirmation, and it must not interrupt whatever is being read. */}
       <div className="status" role="status">
-        {publishedTitle && <>ההודעה &quot;{publishedTitle}&quot; פורסמה</>}
+        {notice && (
+          <>
+            <span>{notice}</span>
+            <button
+              type="button"
+              className="statusClose"
+              onClick={() => setNotice(null)}
+              // A real label: the visible glyph is "×", which a screen reader
+              // reads as a multiplication sign or skips entirely.
+              aria-label="סגור את ההודעה"
+            >
+              ×
+            </button>
+          </>
+        )}
       </div>
 
       {actionError && (

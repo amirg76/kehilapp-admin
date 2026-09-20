@@ -1,69 +1,174 @@
+@import "../../styles/responsive.scss";
+@import "../../styles/mixins.scss";
+
 .home {
   direction: rtl;
 
-  h1 { margin: 0 0 20px; font-size: 24px; }
+  h1 {
+    margin: 0 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
 
-  .error {
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    border-radius: 5px;
-    background: rgba(255, 77, 79, 0.15);
-    border: 1px solid rgba(255, 77, 79, 0.5);
-    color: #ffb3b4;
-    font-size: 14px;
+  > .error {
+    @include error-banner;
+    margin-bottom: var(--space-4);
   }
 
   .tiles {
     display: grid;
     // auto-fit keeps the row readable from a phone to a wide monitor without a
     // media-query ladder.
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 16px;
-    margin-bottom: 32px;
+    // 168px, not a rounder number: it is the widest minimum at which all five
+    // tiles still fit one row inside this content column on a 1280px screen.
+    // At 190px the fifth wrapped onto a line of its own, which read as a tile
+    // that had been forgotten rather than as a row of five.
+    grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+
+    @include sm {
+      // Below 480px a 190px minimum plus the gap is wider than the column, and
+      // auto-fit cannot go under its own minimum — so it is stated explicitly
+      // rather than left to overflow.
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
   }
 
   .tile {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 20px;
-    border: 1px solid #384256;
-    border-radius: 8px;
-    background: #2a3447;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    // The tiles sit ON the content surface, so they need their own step up to
+    // read as objects rather than as five paragraphs. surface-2 plus a hairline
+    // does that without a shadow on every one of them.
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+    overflow: hidden;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
 
-    .label { font-size: 13px; color: #a1a1a1; }
-    .value { font-size: 30px; font-weight: 700; line-height: 1; }
-    .hint { font-size: 12px; color: #8b8b8b; }
+    // A single accent rule across the top edge — the only ornament on the page,
+    // and the thing that makes a row of tiles read as a dashboard rather than
+    // as a table of numbers.
+    &::before {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      top: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-fill), #7c74f0);
+    }
+
+    &:hover {
+      border-color: var(--border-strong);
+    }
+
+    .label {
+      font-size: var(--fs-sm);
+      font-weight: 500;
+      color: var(--text-2);
+    }
+
+    .value {
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text);
+      // Tabular figures so the five numbers line up and so a count going from
+      // 9 to 10 does not shift the tile's width.
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    .hint {
+      font-size: var(--fs-xs);
+      color: var(--text-3); // 5.19:1 on surface-2 light · 5.61:1 dark
+      min-height: 1.4em; // reserves the line so the tile does not resize on load
+    }
+
+    // While the counts are still in flight. The tile keeps its size — this is a
+    // shimmer over the existing "…", not a replacement block, so nothing on the
+    // page moves when the real number lands.
+    &.loading .value {
+      color: var(--text-3);
+      animation: tilePulse 1.2s ease-in-out infinite;
+    }
+  }
+
+  @keyframes tilePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
   }
 
   .recent {
-    h2 { font-size: 17px; margin: 0 0 12px; }
-    .muted { color: #a1a1a1; font-size: 14px; }
+    h2 {
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      margin: 0 0 var(--space-4);
+    }
 
-    ul { list-style: none; margin: 0; padding: 0; }
+    // Loading and empty share one treatment: a quiet, centred panel rather than
+    // a stray line of grey text against the page background. The words are the
+    // ones that were already there.
+    .muted {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8) var(--space-4);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+      color: var(--text-2);
+      font-size: var(--fs-base);
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
 
     li {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 11px 14px;
-      border: 1px solid #384256;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      background: #2a3447;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      background: var(--surface);
+      // One shared rule between rows instead of a border and a margin per row:
+      // the list reads as one object, which is what it is.
+      border-bottom: 1px solid var(--border);
+      transition: background-color var(--dur) var(--ease);
 
-      .title { font-size: 14px; }
+      &:last-child { border-bottom: 0; }
+      &:hover { background: var(--surface-2); }
+
+      .title {
+        font-size: var(--fs-base);
+        color: var(--text);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
 
     .tier {
+      @include chip;
       flex-shrink: 0;
-      padding: 2px 10px;
-      border-radius: 999px;
-      font-size: 11px;
 
-      &.public { background: rgba(136, 132, 216, 0.2); color: #b6b3ee; }
-      &.members { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
+      &.public { background: var(--chip-accent-bg); color: var(--chip-accent-fg); }
+      &.members { background: var(--chip-warn-bg); color: var(--chip-warn-fg); }
     }
   }
 }

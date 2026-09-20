@@ -9,25 +9,12 @@ import {
   Urgency,
 } from "../../api/kehilapp";
 import { errorMessage, errorStatus } from "../../services/http";
+// The urgency table used to live here, because this page needs the labels twice
+// — once for the radios, once to name the classifier's suggestion. It moved out
+// when the edit form became a third caller; the reasoning is unchanged and is
+// written out at the top of that module.
+import { URGENCY_OPTIONS, urgencyLabel } from "./urgencyOptions";
 import "./newMessage.scss";
-
-/**
- * The urgency enum rendered for a human, in the order the server's enum
- * declares it (routine → urgent), so the radio order reads as a scale.
- *
- * A table rather than three hand-written blocks because the same labels are
- * needed twice on this page — once for the radios, once to name the
- * classifier's suggestion — and two copies drift.
- */
-const URGENCY_OPTIONS: ReadonlyArray<{ value: Urgency; label: string; hint: string }> = [
-  { value: "routine", label: "שגרה", hint: "ברירת המחדל — הודעה רגילה." },
-  { value: "important", label: "חשוב", hint: "כדאי לקרוא, אך לא דורש פעולה מיידית." },
-  { value: "urgent", label: "דחוף", hint: "דורש תשומת לב מיידית." },
-];
-
-/** Single lookup into that table, so the labels exist in exactly one place. */
-const urgencyLabel = (value: Urgency) =>
-  URGENCY_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
 /**
  * A page, not a modal: it carries a category fetch and four fields, which is

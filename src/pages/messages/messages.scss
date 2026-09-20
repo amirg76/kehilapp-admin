@@ -1,52 +1,42 @@
+@import "../../styles/responsive.scss";
+@import "../../styles/mixins.scss";
+
 .messages {
   direction: rtl;
 
   .info {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
+    @include page-head;
 
-    h1 { margin: 0; font-size: 24px; }
-    .count { color: #a1a1a1; font-size: 14px; margin-inline-end: auto; }
+    .count {
+      color: var(--text-2);
+      font-size: var(--fs-base);
+      font-variant-numeric: tabular-nums;
+      // Pushes the page action to the far edge while the count stays next to
+      // the title it belongs to.
+      margin-inline-end: auto;
+    }
 
+    // The one primary action on this screen, and the only filled button on it.
     .newMessageBtn {
-      padding: 8px 16px;
-      border-radius: 5px;
-      // White on the #8884d8 accent measures 3.31:1, under the 4.5:1 floor.
-      // Darkened to 5.63:1 for button fills; the accent itself is kept for
-      // focus outlines, which are judged against the adjacent colour.
-      background: #615cb8;
-      color: #fff;
-      font-size: 14px;
-      text-decoration: none;
-      white-space: nowrap;
-
-      &:hover { opacity: 0.9; }
-      &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+      @include btn-filled;
+      & {
+        min-height: 40px;
+        font-size: var(--fs-base);
+      }
     }
   }
 
   .error {
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    border-radius: 5px;
-    background: rgba(255, 77, 79, 0.15);
-    border: 1px solid rgba(255, 77, 79, 0.5);
-    color: #ffb3b4;
-    font-size: 14px;
+    @include error-banner;
+    margin-bottom: var(--space-4);
   }
 
+  // The publish / save confirmation. Deliberately the accent, not the success
+  // green: green in this app means "this account is approved", and reusing it
+  // for "your edit saved" would blur a distinction the users table depends on.
   .status {
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    border-radius: 5px;
-    background: rgba(136, 132, 216, 0.15);
-    border: 1px solid rgba(136, 132, 216, 0.5);
-    color: #d6d4f7;
-    font-size: 14px;
+    @include banner(var(--chip-accent-bg), var(--chip-accent-fg), var(--accent));
+    margin-bottom: var(--space-4);
 
     // The live region is always in the DOM so a screen reader announces the
     // text that lands in it later. Empty, it must occupy nothing: collapsed
@@ -57,55 +47,128 @@
       padding: 0;
       border: 0;
     }
+
+    // Laid out only when it has content, so the `:empty` collapse above still
+    // wins: `display:flex` on an empty box would otherwise re-introduce the
+    // banner's own box model with nothing in it.
+    &:not(:empty) {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    // The dismiss control. Pushed to the far (inline-end) edge, and sized to a
+    // real touch target rather than the 12px glyph it contains — a close button
+    // that only responds on the "×" itself is one a thumb misses.
+    .statusClose {
+      margin-inline-start: auto;
+      flex: none;
+      min-width: 32px;
+      min-height: 32px;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      // Inherits the banner's own foreground, which the mixin already picked to
+      // contrast with the banner background — a hard-coded colour here would be
+      // the one thing that breaks when the theme changes.
+      color: inherit;
+      font-size: var(--fs-lg);
+      line-height: 1;
+      cursor: pointer;
+
+      &:hover {
+        background: rgb(0 0 0 / 8%);
+      }
+
+      // The same focus ring every other control in this app uses (mixins.scss),
+      // because a keyboard user must be able to reach and see this one too.
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    }
   }
 
   // Same containment the users table has: the grid is wider than a phone, and
   // its own horizontal scroller is what should absorb that -- not the page.
-  // Fixing one table and leaving its twin sideways-scrolling would be worse
-  // than fixing neither, since the difference would read as a layout bug.
   .dataTable {
     height: 600px;
     max-width: 100%;
     overflow-x: auto;
+
+    @include md {
+      height: 520px;
+    }
   }
 
-  // Tier badge. Carries its own text, so the colour is reinforcement and never
-  // the only signal.
+  // Visibility badge. Carries its own text, so the colour is reinforcement and
+  // never the only signal.
   .tier {
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 12px;
+    @include chip;
 
-    &.public { background: rgba(136, 132, 216, 0.2); color: #b6b3ee; }
-    &.members { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
+    &.public { background: var(--chip-accent-bg); color: var(--chip-accent-fg); }
+    &.members { background: var(--chip-warn-bg); color: var(--chip-warn-fg); }
   }
 
-  // Urgency badge, same shape as .tier above. Like .tier it carries its own
-  // Hebrew word, so the colour only reinforces a distinction the text already
-  // makes — a reader who cannot separate amber from red still gets the answer.
-  // No width or margin of its own: it sits inside a fixed-width grid cell, and
-  // the grid's own horizontal scroller (.dataTable) absorbs the total width.
+  // Urgency badge, same shape as .tier above and the same rule about colour.
+  // The three levels read as a scale: neutral → blue → red, so a glance down
+  // the column sorts itself even before the Hebrew word is read.
   .urgencyTag {
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 12px;
+    @include chip;
 
-    &.routine { background: rgba(255, 255, 255, 0.08); color: #c7cedb; }
-    &.important { background: rgba(96, 165, 250, 0.18); color: #9ecbff; }
-    &.urgent { background: rgba(255, 77, 79, 0.18); color: #ff9a9b; }
+    &.routine { background: var(--chip-neutral-bg); color: var(--chip-neutral-fg); }
+    &.important { background: var(--chip-info-bg); color: var(--chip-info-fg); }
+    &.urgent {
+      background: var(--chip-danger-bg);
+      color: var(--chip-danger-fg);
+      // The only chip in the app with a border: "urgent" is the one value in
+      // this column an admin is scanning FOR, and the extra edge is what makes
+      // it findable without turning the cell into a block of red.
+      box-shadow: inset 0 0 0 1px var(--danger-border);
+    }
+  }
+
+  // The two per-row controls on one line. `min-width: 0` is the same
+  // load-bearing rule the compose form's .categoryRow carries: a flex item
+  // defaults to min-width:auto and refuses to shrink below its content, and this
+  // page's history is horizontal overflow on exactly that mistake. The column
+  // itself is a fixed 170px and the grid's own scroller (.dataTable) absorbs the
+  // total width, so nothing here can push the PAGE sideways at 375px.
+  .rowActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  // Edit and delete share one geometry so the pair reads as one control group;
+  // the accent for edit and the danger accent for delete, because editing is
+  // reversible and deleting is not. Both are outlined: the filled red belongs
+  // to the confirm dialog, which is where the irreversible click actually is.
+  .editBtn,
+  .deleteBtn {
+    @include btn-outline;
+    // 32px, not the shared 36px — see the note in users.scss: two controls have
+    // to fit a 52px grid row.
+    & {
+      min-height: 32px;
+      padding: 0 var(--space-3);
+      font-size: var(--fs-xs);
+    }
+  }
+
+  .editBtn {
+    border-color: var(--accent);
+    color: var(--accent-text);
+    &:hover { background: var(--chip-accent-bg); }
   }
 
   .deleteBtn {
-    padding: 4px 12px;
-    border: 1px solid rgba(255, 77, 79, 0.6);
-    border-radius: 4px;
-    background: transparent;
-    color: #ff9a9b;
-    cursor: pointer;
-    font-size: 13px;
-
-    &:hover { background: rgba(255, 77, 79, 0.15); }
-    &:focus-visible { outline: 2px solid #ff9a9b; outline-offset: 2px; }
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+    &:hover { background: var(--chip-danger-bg); }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   }
 
   // .confirmBackdrop / .confirmBox: lifted to src/styles/global.scss (shared

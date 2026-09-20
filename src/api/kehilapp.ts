@@ -72,6 +72,20 @@ export type SessionUser = {
  */
 export type Paged<T> = { items: T[]; total: number };
 
+/**
+ * Encodes one path segment.
+ *
+ * Every `id` below arrives from `useParams()` — that is, from the address bar,
+ * which anyone can type into. Interpolating it raw meant a "/", "?" or "#" in
+ * the URL would re-shape the request path rather than be sent as part of it:
+ * `/api/users/<id>/revoke` with an id of "x/y" is a request to a route nobody
+ * wrote. Nothing exploitable is reachable that way today — the server answers
+ * 404 on the paths this produces — so this is consistency, not a live fix, and
+ * it is applied to every interpolation in this file rather than to the one that
+ * happened to be noticed.
+ */
+const pathId = (id: string): string => encodeURIComponent(id);
+
 const numericHeader = (value: unknown, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -129,13 +143,39 @@ export const messagesApi = {
       })
     ),
 
-  byId: (id: string) => http.get<Message>(`/api/messages/${id}`).then((r) => r.data),
+  byId: (id: string) => http.get<Message>(`/api/messages/${pathId(id)}`).then((r) => r.data),
 
   /** JSON body — no multipart needed here, unlike the attachment-bearing update path. */
   create: (input: MessageInput) => http.post<Message>("/api/messages", input).then((r) => r.data),
 
+  /**
+   * Edits an existing message. JSON body, like `create` — the route runs multer
+   * first, but multer passes a non-multipart request straight through to
+   * express.json, so no attachment means no multipart envelope is needed.
+   *
+   * The whole `MessageInput` goes out on every save, and that is not laziness:
+   * PATCH here is only partial in the HTTP verb. `updateMessageValidation`
+   * (messagesValidation.js) marks BOTH `categoryId` and `title` as `.required()`,
+   * so a body that carries just the field the admin touched is answered 400
+   * "Validation Error" — verified against the running server. Typing the input as
+   * the full shape is what stops a caller from building that request at all.
+   *
+   * `visibility` and `urgency` are admin-only on the server: a non-admin sending
+   * EITHER of them on an update gets 403, even when the value matches what is
+   * already stored (messagesController.js, isForbiddenVisibilityRequest /
+   * isForbiddenUrgencyRequest with onUpdate). This panel is admin-only, so
+   * sending them is correct here — it would not be from the resident app.
+   *
+   * Ownership is not a concern for this caller: the repository filters by
+   * `senderId` only for a non-admin (messageRepository.js, updateMessageInDb),
+   * so an admin may edit any author's message. A 404 back means the message is
+   * gone, not that it belongs to someone else.
+   */
+  update: (id: string, input: MessageInput) =>
+    http.patch<Message>(`/api/messages/${pathId(id)}`, input).then((r) => r.data),
+
   /** Admin-only on the server; the UI hides it for members, the API enforces it. */
-  remove: (id: string) => http.delete(`/api/messages/${id}`).then(() => id),
+  remove: (id: string) => http.delete(`/api/messages/${pathId(id)}`).then(() => id),
 
   /**
    * Asks the server to suggest a category and an urgency for a draft. A POST,
@@ -161,21 +201,21 @@ export const categoriesApi = {
 export const usersApi = {
   /** Admin-only: the one endpoint that returns every account at once. */
   list: () => http.get<User[]>("/api/users").then((r) => r.data),
-  byId: (id: string) => http.get<User>(`/api/users/${id}`).then((r) => r.data),
+  byId: (id: string) => http.get<User>(`/api/users/${pathId(id)}`).then((r) => r.data),
 
   /**
    * Admits an account to the community. Server refuses (400) revoking an
    * admin's own approval too, but approve carries no such refusal.
    * Response shape confirmed at usersController.js's toSafeUser (approveUser).
    */
-  approve: (id: string) => http.patch<User>(`/api/users/${id}/approve`).then((r) => r.data),
+  approve: (id: string) => http.patch<User>(`/api/users/${pathId(id)}/approve`).then((r) => r.data),
 
   /**
    * Withdraws approval. Server refuses (400) revoking your own approval, and
    * refuses (400) revoking an admin's approval — it would take nothing away.
    * Response shape confirmed at usersController.js's toSafeUser (revokeUser).
    */
-  revoke: (id: string) => http.patch<User>(`/api/users/${id}/revoke`).then((r) => r.data),
+  revoke: (id: string) => http.patch<User>(`/api/users/${pathId(id)}/revoke`).then((r) => r.data),
 
   /**
    * Promotes or demotes. Server refuses (400) changing your own role, and
@@ -183,5 +223,5 @@ export const usersApi = {
    * Response shape confirmed at usersController.js's toSafeUser (changeUserRole).
    */
   setRole: (id: string, role: Role) =>
-    http.patch<User>(`/api/users/${id}/role`, { role }).then((r) => r.data),
+    http.patch<User>(`/api/users/${pathId(id)}/role`, { role }).then((r) => r.data),
 };

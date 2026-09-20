@@ -1,0 +1,148 @@
+// Shared component recipes.
+//
+// Four pages had grown four slightly different versions of the same five
+// things — a page heading row, an error box, a status pill, an outline button
+// and a filled button. They differed in padding, radius and, in the error box's
+// case, in the red itself. These mixins are the one definition; a page that
+// needs a variation passes it in rather than restating the whole block.
+//
+// Mixins, not classes: the class names in the markup are fixed (.info, .error,
+// .tier, .actionBtn …) and this change is not allowed to rewrite the JSX, so the
+// shared rules have to be poured INTO those existing selectors.
+
+// tokens.scss is deliberately NOT imported here. It emits a real :root block,
+// and this file is imported by every page — one import per page would stamp the
+// whole palette into the bundle four more times. The mixins only ever reference
+// the tokens through var(), which needs no SCSS-level import.
+@import "./responsive.scss";
+
+// Title + supporting count + optional page action, separated from the content
+// below by a rule rather than by guesswork spacing.
+@mixin page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+
+  h1 {
+    margin: 0;
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+}
+
+// The error banner. Opaque tint, not an alpha wash: an alpha red over an
+// unknown surface has an unknown contrast ratio, and this app's history is a
+// measured contrast failure.
+@mixin banner($bg, $fg, $border) {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: #{$bg};
+  border: 1px solid #{$border};
+  color: #{$fg};
+  font-size: var(--fs-base);
+  // The icon is drawn, not typed: no emoji, and it cannot be read out as a word
+  // by a screen reader on top of the sentence that is already there.
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+@mixin error-banner {
+  @include banner(var(--danger-soft-bg), var(--danger-text), var(--danger-border));
+}
+
+// Status pill. Always carries its own word — the colour reinforces the text and
+// never replaces it, so it still reads for anyone who cannot separate the hues.
+@mixin chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+// Primary, filled. One per screen.
+@mixin btn-filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-5);
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  transition: background-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+
+  &:hover:not(:disabled) {
+    background: var(--accent-fill-hover);
+    box-shadow: var(--shadow-2);
+  }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  &:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+}
+
+// Secondary, outlined. $fg/$border let the danger variant reuse the geometry.
+@mixin btn-outline($fg: var(--text), $border: var(--border-strong), $tint: var(--surface-2)) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  min-height: 36px;
+  border: 1px solid #{$border};
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #{$fg};
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+
+  &:hover:not(:disabled) { background: #{$tint}; }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+// Form control. Shared by the compose form and the edit form; the login box
+// restates it because it is not inside the app shell.
+@mixin field-control {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px var(--space-3);
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-base);
+  font-family: inherit;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+
+  &::placeholder { color: var(--text-3); }
+  &:hover:not(:disabled) { border-color: var(--accent); }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+}

@@ -1,36 +1,60 @@
-.newMessage {
+@import "../../styles/responsive.scss";
+@import "../../styles/mixins.scss";
+
+// One stylesheet, two pages. EditMessage.tsx renders the same five controls in
+// the same order as NewMessage.tsx and must not drift away from it visually —
+// two copies of this file would let it. Shared by selector rather than by
+// renaming the class, so the compose page keeps the name it has everywhere else.
+.newMessage,
+.editMessage {
   direction: rtl;
-  max-width: 560px;
+  max-width: 620px;
 
   .info {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
-
-    h1 { margin: 0; font-size: 24px; }
+    @include page-head;
+    & { justify-content: space-between; }
 
     .back {
-      padding: 8px 16px;
-      border: 1px solid #4a5568;
-      border-radius: 5px;
-      background: transparent;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      white-space: nowrap;
-
-      &:hover { background: rgba(255, 255, 255, 0.06); }
-      &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+      @include btn-outline;
+      & { min-height: 40px; }
     }
+  }
+
+  // The edit page's placeholder while the message and the categories load. The
+  // form is not rendered at all until both answer, so this is what occupies the
+  // page in the meantime — which is why it is a panel with a pulse rather than
+  // one grey line, and why it reserves roughly the height the form will take so
+  // the page does not jump when it arrives.
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    padding: var(--space-6);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: var(--fs-base);
+    animation: formLoadingPulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes formLoadingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  // The edit page shows a load failure above the form instead of inside it, so
+  // .error has to exist at this level too — under .newMessageForm it would only
+  // style the save failure.
+  > .error {
+    @include error-banner;
   }
 
   .newMessageForm {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-5);
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -38,43 +62,48 @@
     .field {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--space-1);
       width: 100%;
 
-      label { font-size: 13px; color: #ddd; }
+      label {
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        color: var(--text-2);
+      }
 
       input[type="text"],
       textarea,
       select {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #384256;
-        background: #2a3447;
-        color: #fff;
-        font-size: 14px;
-        font-family: inherit;
-
-        &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+        @include field-control;
+        & { background: var(--surface-2); }
       }
 
-      textarea { resize: vertical; }
+      textarea {
+        resize: vertical;
+        min-height: 140px;
+        line-height: 1.6;
+      }
+
+      // Native select arrow colour follows `color-scheme` (set on :root in
+      // tokens.scss), so no custom chevron is needed to keep it visible in dark.
+      select { cursor: pointer; }
 
       .counter {
         align-self: flex-start;
-        font-size: 12px;
-        color: #a1a1a1;
+        font-size: var(--fs-xs);
+        color: var(--text-3);
+        font-variant-numeric: tabular-nums;
 
-        &.at-limit { color: #ffb3b4; font-weight: 600; }
+        // Not colour alone: the number itself is the signal, the weight change
+        // is the second one, and the form's own hint spells it out in words.
+        &.at-limit { color: var(--danger-text); font-weight: 700; }
       }
 
       .hint {
-        font-size: 12px;
-        color: #a1a1a1;
+        font-size: var(--fs-xs);
+        color: var(--text-3);
 
-        &.error { color: #ffb3b4; }
+        &.error { color: var(--danger-text); font-weight: 500; }
       }
 
       // The select and the "suggest" button share one line when there is room
@@ -83,7 +112,7 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        gap: var(--space-2);
         width: 100%;
 
         select {
@@ -101,38 +130,33 @@
     }
 
     .suggestBtn {
-      flex: 0 0 auto;
-      padding: 10px 14px;
-      border: 1px solid #615cb8;
-      border-radius: 5px;
-      background: transparent;
-      color: #c9c6f2;
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-      white-space: nowrap;
-
-      &:hover:not(:disabled) { background: rgba(136, 132, 216, 0.15); }
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-      &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+      @include btn-outline(var(--accent-text), var(--accent), var(--chip-accent-bg));
+      & {
+        flex: 0 0 auto;
+        min-height: 44px;
+        font-size: var(--fs-base);
+      }
     }
 
     // Deliberately NOT styled like .error: a suggestion that arrived is a
     // normal result, and a failed suggestion still leaves the form fully
     // usable. Red here would tell the admin something broke when nothing did.
     .suggestion {
-      padding: 10px 12px;
-      border-radius: 5px;
-      background: rgba(136, 132, 216, 0.12);
-      border: 1px solid rgba(136, 132, 216, 0.45);
-      font-size: 14px;
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      background: var(--chip-accent-bg);
+      // The accent bar on the inline-start edge marks this as the machine's
+      // contribution rather than part of the form, without a label saying so.
+      border: 1px solid var(--accent);
+      border-inline-start-width: 4px;
+      font-size: var(--fs-base);
 
       p { margin: 0; }
-      p + p { margin-top: 6px; }
+      p + p { margin-top: var(--space-2); }
 
-      .headline { color: #d6d4f7; font-weight: 600; }
-      .reason { color: #ddd; }
-      .disclaimer { color: #a1a1a1; font-size: 12px; }
+      .headline { color: var(--chip-accent-fg); font-weight: 700; }
+      .reason { color: var(--chip-accent-fg); }
+      .disclaimer { color: var(--chip-accent-fg); opacity: 0.85; font-size: var(--fs-xs); }
     }
 
     // The security model made visible: which of the two radios is picked
@@ -142,29 +166,41 @@
     // one needs its meaning spelled out next to it.
     .visibility,
     .urgency {
-      border: 1px solid #384256;
-      border-radius: 5px;
-      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      padding: var(--space-4);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: var(--space-3);
 
       legend {
-        padding: 0 6px;
-        font-size: 13px;
-        color: #ddd;
+        padding: 0 var(--space-2);
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        color: var(--text-2);
       }
 
       .radio {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        color: #fff;
+        gap: var(--space-2);
+        font-size: var(--fs-base);
+        color: var(--text);
         cursor: pointer;
+        // A real target for the label, not just the 13px dot next to it.
+        min-height: 24px;
 
-        input { cursor: pointer; }
+        input {
+          cursor: pointer;
+          width: 18px;
+          height: 18px;
+          // accent-color is the one-line way to theme a native radio; it keeps
+          // the control native (and therefore keyboard- and screen-reader
+          // correct) instead of replacing it with a styled div.
+          accent-color: var(--accent-fill);
+        }
       }
 
       // Each urgency choice wraps its radio and its hint together; the
@@ -173,39 +209,27 @@
       .option {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: var(--space-1);
       }
 
       .hint {
-        margin-inline-start: 24px;
-        font-size: 12px;
-        color: #a1a1a1;
+        margin-inline-start: 26px;
+        font-size: var(--fs-xs);
+        color: var(--text-3);
       }
     }
 
     .error {
-      padding: 10px 12px;
-      border-radius: 5px;
-      background: rgba(255, 77, 79, 0.15);
-      border: 1px solid rgba(255, 77, 79, 0.5);
-      color: #ffb3b4;
-      font-size: 14px;
+      @include error-banner;
     }
 
     button[type="submit"] {
-      padding: 11px;
-      border: none;
-      border-radius: 5px;
-      // White on the #8884d8 accent measures 3.31:1, under the 4.5:1 floor.
-      // Darkened to 5.63:1 for button fills; the accent itself is kept for
-      // focus outlines, which are judged against the adjacent colour.
-      background: #615cb8;
-      color: #fff;
-      font-size: 15px;
-      cursor: pointer;
-
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-      &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+      @include btn-filled;
+      & {
+        margin-top: var(--space-1);
+        min-height: 46px;
+        font-size: var(--fs-md);
+      }
     }
   }
 }

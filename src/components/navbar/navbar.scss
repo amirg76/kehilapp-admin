@@ -1,87 +1,99 @@
 @import "../../styles/responsive.scss";
+@import "../../styles/mixins.scss";
 
+// The top bar. One block now — the template's leftover rules for a notification
+// badge and an avatar image were styling elements Navbar.tsx no longer renders.
 .navbar {
+  direction: rtl;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   width: 100%;
-  padding: 20px;
+  padding: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+
+  @include lg {
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
 
   .logo {
     display: flex;
     align-items: center;
-    font-weight: bold;
-    gap: 10px;
+    gap: var(--space-3);
+    font-weight: 700;
+    font-size: var(--fs-md);
+    letter-spacing: -0.01em;
+    color: var(--text);
+    min-width: 0;
+
+    // A drawn mark, not an emoji and not an <img>: it is a pseudo-element, so
+    // it is decorative by construction and a screen reader never meets it.
+    &::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent-fill), #7c74f0);
+      box-shadow: var(--shadow-1);
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
+
   .icons {
     display: flex;
     align-items: center;
-    gap: 20px;
-
-    .icon{
-      @include sm{
-        display: none;
-      }
-    }
-
-    .notification {
-      position: relative;
-
-      span {
-        background-color: red;
-        color: white;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-      }
-    }
-
-    .user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      img {
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-    }
+    gap: var(--space-4);
+    min-width: 0;
   }
-}
-
-// Wired-up navbar: real identity + a logout control replace the template's
-// decorative icon strip.
-.navbar {
-  direction: rtl;
 
   .user {
     display: flex;
     flex-direction: column;
-    line-height: 1.25;
+    align-items: flex-start;
+    line-height: 1.3;
+    min-width: 0;
 
-    .name { font-size: 14px; }
-    .role { font-size: 11px; color: #a1a1a1; }
+    .name {
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 22ch;
+    }
+    // The role is a status, so it gets the same pill every other status in this
+    // app gets rather than being a second grey line of text.
+    .role {
+      @include chip;
+      margin-top: 2px;
+      padding: 1px var(--space-2);
+      font-size: 11px;
+      background: var(--chip-accent-bg);
+      color: var(--chip-accent-fg);
+    }
   }
 
   .logout {
-    padding: 6px 14px;
-    border: 1px solid #4a5568;
-    border-radius: 5px;
-    background: transparent;
-    color: #fff;
-    cursor: pointer;
-    font-size: 13px;
-
-    &:hover { background: rgba(255, 255, 255, 0.08); }
-    &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
+    @include btn-outline;
+    // 36px is the shared outline-button height; the top bar is the one place a
+    // 44px target is worth the extra room, because it is the control an
+    // operator hits by mistake and the one they hit deliberately at the end.
+    // Wrapped in `& {}` because the mixin above ends in nested rules, and a
+    // bare declaration after those is the Sass `mixed-decls` deprecation.
+    & { min-height: 40px; }
   }
 }
