@@ -5,6 +5,12 @@ import { AxiosError } from "axios";
 import { Role, User, usersApi } from "../../api/kehilapp";
 import { errorMessage } from "../../services/http";
 import { useAuth } from "../../auth/AuthContext";
+// Member-supplied name and email are rendered here as themselves, with invisible
+// bidi controls removed — see src/utils/plainText.ts for what they do and why a
+// dir="rtl" panel has no visual tell for it. The messages grid has done this
+// since it was hardened; this grid is where an admin reads a name while
+// PROMOTING or REVOKING that account, so the same treatment matters more here.
+import { gridCellText, stripBidiControls } from "../../utils/plainText";
 import "./users.scss";
 
 const formatDate = (value?: string) =>
@@ -274,8 +280,31 @@ const Users = () => {
     //
     // "פעולות" keeps its `width` and gets no flex: an admin row renders TWO
     // buttons ("הפוך לחבר" + "הפוך למנהל") whose Hebrew labels do not reflow.
-    { field: "name", headerName: "שם", flex: 1, minWidth: 120 },
-    { field: "email", headerName: "אימייל", flex: 1.6, minWidth: 170 },
+    //
+    // Both free-text columns get a valueGetter for the same reason the messages
+    // grid's "כותרת" does: the cell would otherwise render `row.name` /
+    // `row.email` raw, and a bidi control in either one re-orders what the admin
+    // reads without changing what is stored. The value returned here is also what
+    // the grid sorts, filters and exports by, so the quick-filter box and the CSV
+    // see the same string the operator sees.
+    //
+    // `email` is not exempt: the server's Joi.string().email() accepts bidi
+    // controls in the local part, and an account registered with an empty name
+    // has its name derived from exactly that local part (authController.js).
+    {
+      field: "name",
+      headerName: "שם",
+      flex: 1,
+      minWidth: 120,
+      valueGetter: (params) => gridCellText(params.row.name),
+    },
+    {
+      field: "email",
+      headerName: "אימייל",
+      flex: 1.6,
+      minWidth: 170,
+      valueGetter: (params) => gridCellText(params.row.email),
+    },
     {
       field: "role",
       headerName: "תפקיד",
@@ -333,6 +362,11 @@ const Users = () => {
 
         const rowBusy = isMutating && busyRowId === row._id;
         const isAdmin = row.role === "admin";
+        // The name as it goes into an aria-label. stripBidiControls, not
+        // gridCellText: a label is read aloud, so the control has to go, but
+        // the author's own spacing is not the grid's to collapse here — the
+        // messages grid draws the same line for its row actions.
+        const safeName = stripBidiControls(row.name);
 
         const buttons: { key: string; label: string; ariaLabel: string; action: PendingAction }[] = [];
 
@@ -343,20 +377,20 @@ const Users = () => {
           buttons.push({
             key: "demote",
             label: "הפוך לחבר",
-            ariaLabel: `הפוך את ${row.name} לחבר`,
+            ariaLabel: `הפוך את ${safeName} לחבר`,
             action: { kind: "role", user: row, role: "member" },
           });
         } else if (row.approved) {
           buttons.push({
             key: "revoke",
             label: "בטל אישור",
-            ariaLabel: `בטל אישור עבור ${row.name}`,
+            ariaLabel: `בטל אישור עבור ${safeName}`,
             action: { kind: "revoke", user: row },
           });
           buttons.push({
             key: "promote",
             label: "הפוך למנהל",
-            ariaLabel: `הפוך את ${row.name} למנהל`,
+            ariaLabel: `הפוך את ${safeName} למנהל`,
             action: { kind: "role", user: row, role: "admin" },
           });
         } else if (row.emailVerified) {
@@ -370,7 +404,7 @@ const Users = () => {
           buttons.push({
             key: "approve",
             label: "אשר",
-            ariaLabel: `אשר את ${row.name}`,
+            ariaLabel: `אשר את ${safeName}`,
             action: { kind: "approve", user: row },
           });
         }
@@ -443,7 +477,7 @@ const Users = () => {
         <div className="confirmBackdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
           <div className="confirmBox" ref={dialogRef}>
             <h2 id="confirmTitle">{dialogCopy(pendingAction).title}</h2>
-            <p className="target">{pendingAction.user.name}</p>
+            <p className="target">{stripBidiControls(pendingAction.user.name)}</p>
             <p className="warn">{dialogCopy(pendingAction).body}</p>
             <div className="actions">
               <button type="button" ref={cancelRef} onClick={closeDialog} disabled={isMutating}>

@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "plain-text-check": "node scripts/plain-text-check.mjs",
+    "check": "npm run plain-text-check",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -9,6 +9,10 @@ import { errorMessage } from "../../services/http";
 // edit form needed the same three levels — see the comment there for why a third
 // hand-written copy is a drift waiting to happen.
 import { urgencyLabel, urgencyOf } from "./urgencyOptions";
+// Member-submitted text is rendered here as itself, with invisible bidi controls
+// removed — see src/utils/plainText.ts for what they do and why a dir="rtl"
+// panel has no visual tell for it.
+import { gridCellText, stripBidiControls } from "../../utils/plainText";
 import "./messages.scss";
 
 const formatDate = (value?: string) =>
@@ -115,7 +119,18 @@ const Messages = () => {
   // whose Hebrew labels do not reflow, so it must not be squeezed by a flex
   // share that a narrow window computes.
   const columns: GridColDef[] = [
-    { field: "title", headerName: "כותרת", flex: 1.4, minWidth: 150 },
+    {
+      field: "title",
+      headerName: "כותרת",
+      flex: 1.4,
+      minWidth: 150,
+      // This column had NO valueGetter until now — it rendered `row.title`
+      // straight — so a title carrying U+202E reordered on screen while the
+      // stored value stayed as posted. Going through the same helper as the body
+      // column also means sorting and the toolbar's quick filter operate on the
+      // text the admin can actually read.
+      valueGetter: (params) => gridCellText(params.row.title),
+    },
     {
       field: "categoryId",
       headerName: "קטגוריה",
@@ -155,7 +170,10 @@ const Messages = () => {
       minWidth: 180,
       // Plain text into a cell, never dangerouslySetInnerHTML: this content is
       // user-submitted, and the board already had an XSS through an attachment.
-      valueGetter: (params) => (params.row.text ?? "").replace(/\s+/g, " ").trim(),
+      // Whitespace collapsing was already here; the bidi strip is the new part.
+      // The old expression let U+202E and the isolate characters through, so a
+      // body could render right-to-left-reversed inside the cell.
+      valueGetter: (params) => gridCellText(params.row.text),
     },
     {
       field: "createdAt",
@@ -186,7 +204,7 @@ const Messages = () => {
             // Both controls carry the message title, because "ערוך"/"מחק" alone
             // is what an admin tabbing through the grid hears twenty-five times
             // with no idea which row they are on.
-            aria-label={`ערוך את ההודעה ${params.row.title}`}
+            aria-label={`ערוך את ההודעה ${stripBidiControls(params.row.title)}`}
           >
             ערוך
           </Link>
@@ -196,7 +214,7 @@ const Messages = () => {
             onClick={() => setPendingDelete(params.row as Message)}
             // A real label, not an icon alone — the icon-only button in the
             // template announced nothing at all to a screen reader.
-            aria-label={`מחק את ההודעה ${params.row.title}`}
+            aria-label={`מחק את ההודעה ${stripBidiControls(params.row.title)}`}
           >
             מחק
           </button>
@@ -279,7 +297,7 @@ const Messages = () => {
         <div className="confirmBackdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
           <div className="confirmBox">
             <h2 id="confirmTitle">למחוק את ההודעה?</h2>
-            <p className="target">{pendingDelete.title}</p>
+            <p className="target">{stripBidiControls(pendingDelete.title)}</p>
             <p className="warn">הפעולה אינה הפיכה.</p>
             <div className="actions">
               <button type="button" onClick={() => setPendingDelete(null)}>
