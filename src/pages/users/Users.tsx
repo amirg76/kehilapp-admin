@@ -266,12 +266,21 @@ const Users = () => {
   // width the operator had dragged.
   const columns: GridColDef[] = useMemo(
     () => [
-    { field: "name", headerName: "שם", width: 200 },
-    { field: "email", headerName: "אימייל", width: 260 },
+    // Sizing: same rule as the messages grid (Messages.tsx). `flex` on the two
+    // free-text columns, a `minWidth` floor on every column, no fixed `width`
+    // that can push the total past the content area. The old fixed set summed to
+    // 1200px inside a ~962px content area at a 1280px window, so the grid
+    // scrolled sideways; the floors here sum to 920px.
+    //
+    // "פעולות" keeps its `width` and gets no flex: an admin row renders TWO
+    // buttons ("הפוך לחבר" + "הפוך למנהל") whose Hebrew labels do not reflow.
+    { field: "name", headerName: "שם", flex: 1, minWidth: 120 },
+    { field: "email", headerName: "אימייל", flex: 1.6, minWidth: 170 },
     {
       field: "role",
       headerName: "תפקיד",
-      width: 120,
+      width: 90,
+      minWidth: 90,
       renderCell: (params) => (
         <span className={`role ${params.row.role === "admin" ? "admin" : "member"}`}>
           {params.row.role === "admin" ? "מנהל" : "חבר"}
@@ -281,7 +290,8 @@ const Users = () => {
     {
       field: "approved",
       headerName: "סטטוס",
-      width: 120,
+      width: 90,
+      minWidth: 90,
       // Same badge treatment as the messages table's visibility tier
       // (.tier in messages.scss): colour reinforces the text, never replaces it.
       renderCell: (params) => (
@@ -293,20 +303,25 @@ const Users = () => {
     {
       field: "emailVerified",
       headerName: "אימייל מאומת",
-      width: 140,
+      width: 110,
+      minWidth: 110,
       // Text, not a bare tick: "לא" is unambiguous where a missing icon is not.
       valueGetter: (params) => (params.row.emailVerified ? "כן" : "לא"),
     },
     {
       field: "createdAt",
       headerName: "נרשם",
-      width: 140,
+      // 130 for the same reason as Messages.tsx's "נוצר": below it the he-IL
+      // medium date ellipsises on two-digit days.
+      width: 130,
+      minWidth: 130,
       valueGetter: (params) => formatDate(params.row.createdAt),
     },
     {
       field: "actions",
       headerName: "פעולות",
-      width: 220,
+      width: 210,
+      minWidth: 210,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

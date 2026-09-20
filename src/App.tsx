@@ -1,9 +1,11 @@
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@mui/material/styles";
+import { CacheProvider } from "@emotion/react";
 import CssBaseline from "@mui/material/CssBaseline";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { darkTheme, lightTheme } from "./theme";
+import { rtlCache } from "./theme/rtlCache";
 import Home from "./pages/home/Home";
 import Users from "./pages/users/Users";
 import Messages from "./pages/messages/Messages";
@@ -98,18 +100,25 @@ const App = () => {
   const theme = prefersDark ? darkTheme : lightTheme;
 
   return (
-    <ThemeProvider theme={theme}>
-      {/* Normalises the browser's defaults and, through the theme's
-          MuiCssBaseline override, sets `color-scheme` so native scrollbars and
-          form-control chrome follow the theme instead of staying bright white
-          on a dark page. */}
-      <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    // CacheProvider sits ABOVE ThemeProvider because it has to be above every
+    // component whose CSS needs mirroring, and CssBaseline — rendered right
+    // below — is one of them. The cache is what actually turns MUI's physical
+    // CSS round for this RTL app; theme.direction only tells MUI's JavaScript.
+    // See src/theme/rtlCache.ts.
+    <CacheProvider value={rtlCache}>
+      <ThemeProvider theme={theme}>
+        {/* Normalises the browser's defaults and, through the theme's
+            MuiCssBaseline override, sets `color-scheme` so native scrollbars and
+            form-control chrome follow the theme instead of staying bright white
+            on a dark page. */}
+        <CssBaseline />
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </CacheProvider>
   );
 };
 

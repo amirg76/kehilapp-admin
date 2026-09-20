@@ -59,8 +59,17 @@ a {
 .container {
   display: flex;
   flex: 1;
-  gap: var(--space-5);
-  padding: 0 var(--space-5) var(--space-5);
+  // 16px rather than 20px for the side gutter and for the gap to the sidebar.
+  // Measured at 1280px: the table's own frame ended 41px from the viewport edge
+  // (20 gutter + 20 card padding + 1 border) and sat 41px from the sidebar. The
+  // two tables are the whole point of this panel and the owner asked for them
+  // wider, so both of those runs of empty space drop a step on the spacing
+  // scale. 16px is still the scale's own value (--space-4), not an invented one,
+  // and the navbar and footer move with it so the page keeps one edge.
+  gap: var(--space-4);
+  // Side gutter only; the space BELOW the content is unchanged — that one is not
+  // costing the table any width.
+  padding: 0 var(--space-4) var(--space-5);
   align-items: flex-start;
 
   @include lg {
@@ -109,7 +118,11 @@ a {
 }
 
 .contentContainer {
-  padding: var(--space-4) var(--space-5);
+  // The card's side padding is the second of the two 20px runs measured between
+  // the table's frame and the viewport edge (see .container above); 16px on all
+  // four sides now, which also makes this the same inset the lg rule below uses
+  // vertically.
+  padding: var(--space-4);
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);

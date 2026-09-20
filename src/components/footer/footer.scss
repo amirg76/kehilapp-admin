@@ -7,7 +7,10 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-5);
+  // Side padding tracks .container's gutter and the navbar's, so the three
+  // horizontal bands of the page share one edge; the vertical padding is
+  // unchanged.
+  padding: var(--space-5) var(--space-4);
   margin-top: auto;
   border-top: 1px solid var(--border);
   color: var(--text-2);

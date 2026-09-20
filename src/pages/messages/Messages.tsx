@@ -102,18 +102,32 @@ const Messages = () => {
     onSettled: () => setPendingDelete(null),
   });
 
+  // Sizing: `flex` on the three columns whose content is elastic (title,
+  // category, body text) and a `minWidth` floor on every column, instead of the
+  // fixed `width` each used to carry. The fixed set summed to 1240px of columns
+  // inside a ~962px content area at a 1280px window, so the grid scrolled
+  // sideways and "נוצר" was clipped to a ~22px sliver at the edge — an admin had
+  // to scroll a table to read a date. The floors sum to 920px against a 962px
+  // content area, which is what keeps that from coming back at 1280 while still
+  // letting the grid (not the page) scroll on a phone.
+  //
+  // "פעולות" keeps a plain `width`, deliberately: it holds two real buttons
+  // whose Hebrew labels do not reflow, so it must not be squeezed by a flex
+  // share that a narrow window computes.
   const columns: GridColDef[] = [
-    { field: "title", headerName: "כותרת", width: 240 },
+    { field: "title", headerName: "כותרת", flex: 1.4, minWidth: 150 },
     {
       field: "categoryId",
       headerName: "קטגוריה",
-      width: 150,
+      flex: 0.8,
+      minWidth: 100,
       valueGetter: (params) => categoryTitles.get(params.row.categoryId) ?? "—",
     },
     {
       field: "visibility",
       headerName: "נראוּת",
-      width: 120,
+      width: 110,
+      minWidth: 110,
       renderCell: (params) => (
         <span className={`tier ${params.row.visibility === "members" ? "members" : "public"}`}>
           {params.row.visibility === "members" ? "חברים בלבד" : "ציבורי"}
@@ -123,7 +137,8 @@ const Messages = () => {
     {
       field: "urgency",
       headerName: "דחיפות",
-      width: 110,
+      width: 100,
+      minWidth: 100,
       // valueGetter returns the Hebrew label, not the raw enum, so sorting and
       // the toolbar's quick filter operate on what the admin can actually see.
       // renderCell then receives that label as params.value and only adds the
@@ -136,7 +151,8 @@ const Messages = () => {
     {
       field: "text",
       headerName: "תוכן",
-      width: 320,
+      flex: 1.8,
+      minWidth: 180,
       // Plain text into a cell, never dangerouslySetInnerHTML: this content is
       // user-submitted, and the board already had an XSS through an attachment.
       valueGetter: (params) => (params.row.text ?? "").replace(/\s+/g, " ").trim(),
@@ -144,13 +160,19 @@ const Messages = () => {
     {
       field: "createdAt",
       headerName: "נוצר",
+      // 130 and not less: the DataGrid's own cell padding leaves content width
+      // 20px under the column, and at a 110px column "20 בספט׳ 2026" came back
+      // ellipsised on two-digit days. This column's content has a fixed maximum
+      // length, so it gets a width that fits it rather than a flex share.
       width: 130,
+      minWidth: 130,
       valueGetter: (params) => formatDate(params.row.createdAt),
     },
     {
       field: "action",
       headerName: "פעולות",
-      width: 170,
+      width: 150,
+      minWidth: 150,
       sortable: false,
       filterable: false,
       renderCell: (params) => (

@@ -51,6 +51,20 @@ const buildTheme = (mode: "light" | "dark", c: ModePalette): Theme =>
         },
         divider: c.border,
       },
+      // The document is `dir="rtl"` (index.html); this is the same fact told to
+      // MUI, which does not read the DOM to find out. It is what makes MUI's own
+      // direction-aware logic behave — the DataGrid's column reordering and
+      // resizing maths, the Drawer/Menu anchoring, and every `theme.direction`
+      // branch inside the component styles.
+      //
+      // What it does NOT do: rewrite the physical CSS emotion emits for MUI's
+      // own components. That is the RTL emotion cache's job — see
+      // src/theme/rtlCache.ts, mounted as a CacheProvider above ThemeProvider in
+      // App.tsx. The two are a pair: direction tells MUI's logic, the cache
+      // turns its stylesheet round. This file deliberately no longer carries
+      // per-slot mirror fixes; two mechanisms flipping the same property is how
+      // a later "fix" un-fixes something.
+      direction: "rtl",
       shape: { borderRadius: 10 },
       typography: {
         // Heebo first. Inter — which this app already loaded and named — has no
@@ -116,6 +130,14 @@ const buildTheme = (mode: "light" | "dark", c: ModePalette): Theme =>
             columnHeaderTitle: { fontWeight: 600 },
             // MUI's default separator is a near-invisible grey that survives
             // neither mode; the real column boundary is the header fill.
+            //
+            // The separator's POSITION is no longer a problem here. MUI pins
+            // `--sideRight` separators with `right: -12px`; before the RTL
+            // emotion cache that did not flip, and on the rightmost column the
+            // separator measured x 982–1006 against a grid frame ending at 995 —
+            // 11px outside it. The cache rewrites that declaration to
+            // `left: -12px`, and the last column's separator now measures inside
+            // the frame (see the session report for the after-numbers).
             columnSeparator: { color: c.border },
             cell: {
               borderBottom: `1px solid ${c.border}`,
@@ -163,6 +185,23 @@ const buildTheme = (mode: "light" | "dark", c: ModePalette): Theme =>
             // deliberately not papered over from here.
           },
         },
+        // ---------------------------------------------------------------------
+        // NOTHING BELOW MIRRORS A PROPERTY BY HAND, and nothing should.
+        //
+        // src/theme/rtlCache.ts rewrites the physical declarations MUI's own
+        // components emit — MuiButton's start/end icon margins, MuiInputLabel's
+        // `left: 0` and transform-origin, MuiSelect's caret and its `&&&` padding
+        // reservation, MuiTablePagination's `actions` margin, MuiDataGrid's
+        // `menuIcon`. Restating any of them here would mean two mechanisms
+        // flipping one property, which is how a later "fix" silently un-fixes
+        // something: whichever one a reader finds first looks wrong on its own.
+        //
+        // So the rule for this file: if a declaration exists only to move
+        // something to the other side, it does not belong here. The cache does
+        // that. What belongs here is everything else.
+        //
+        // The colour-only overrides below are NOT direction work and stay.
+        // ---------------------------------------------------------------------
         MuiTablePagination: {
           styleOverrides: {
             root: { color: c.text2 },
@@ -174,7 +213,27 @@ const buildTheme = (mode: "light" | "dark", c: ModePalette): Theme =>
           styleOverrides: { root: { color: c.text } },
         },
         MuiFormLabel: {
-          styleOverrides: { root: { color: c.text2 } },
+          styleOverrides: {
+            root: {
+              color: c.text2,
+              // FOCUSED is the state MUI paints with palette.primary.main, and
+              // that is `accentFill` — the fill a white label sits on, chosen to
+              // measure 6.29:1 the other way round. As TEXT on the dark surface
+              // it measures 2.47:1 against a 4.5 requirement, which an axe pass
+              // caught on the filter panel's focused field in dark mode.
+              //
+              // Overridden here rather than by changing primary.main, because
+              // that value is load-bearing as a BACKGROUND: moving it would fix
+              // this label and quietly drop the contrast of every filled button
+              // in both modes. `accent` is the same hue already carried in the
+              // palette for exactly this purpose — text weight, not fill weight.
+              //
+              // Worth knowing WHY it went unseen for so long: the accessibility
+              // scans covered six pages in two colour modes and never opened the
+              // filter panel. They measured pages, not states.
+              "&.Mui-focused": { color: c.accent },
+            },
+          },
         },
         MuiMenuItem: {
           styleOverrides: { root: { color: c.text } },

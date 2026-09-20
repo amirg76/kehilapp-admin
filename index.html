@@ -1,5 +1,15 @@
 <!DOCTYPE html>
-<html lang="he">
+<!-- dir="rtl" is the root fix for this panel's layout, not a cosmetic attribute.
+     Every string in this application is Hebrew, but the document itself was
+     left-to-right: measured in a real browser at 1280px, `document.documentElement.dir`
+     was absent and `getComputedStyle(body).direction` was "ltr", so the shell's
+     flex row laid the sidebar out at left 20 / right 256 and pushed the table to
+     left 297. The per-component `direction: rtl` rules in the SCSS only ever
+     reached text inside each component; the shell that positions them never
+     inherited it. Declaring it here makes the browser flow the whole layout —
+     and every logical property (margin-inline-*, border-inline-start, inset-inline)
+     the stylesheets already use — in the direction the content is actually read. -->
+<html lang="he" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
