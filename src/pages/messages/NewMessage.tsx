@@ -1,8 +1,19 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { categoriesApi, MESSAGE_LIMITS, messagesApi } from "../../api/kehilapp";
-import { errorMessage } from "../../services/http";
+import {
+  categoriesApi,
+  MESSAGE_LIMITS,
+  MessageClassification,
+  messagesApi,
+  Urgency,
+} from "../../api/kehilapp";
+import { errorMessage, errorStatus } from "../../services/http";
+// The urgency table used to live here, because this page needs the labels twice
+// — once for the radios, once to name the classifier's suggestion. It moved out
+// when the edit form became a third caller; the reasoning is unchanged and is
+// written out at the top of that module.
+import { URGENCY_OPTIONS, urgencyLabel } from "./urgencyOptions";
 import "./newMessage.scss";
 
 /**
@@ -19,6 +30,21 @@ const NewMessage = () => {
   const [text, setText] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [visibility, setVisibility] = useState<"public" | "members">("public");
+  // "routine" is the server's default for this field; starting anywhere else
+  // would mean every message the admin does not think about gets escalated.
+  const [urgency, setUrgency] = useState<Urgency>("routine");
+
+  // What the classifier came back with, kept so its reasoning stays on screen
+  // after the form fields have been filled from it. Null until asked.
+  const [suggestion, setSuggestion] = useState<MessageClassification | null>(null);
+  // A short Hebrew line explaining why a suggestion could not be produced. Held
+  // separately from `suggestion` because a failed attempt must not leave the
+  // previous suggestion's text standing next to a new error.
+  const [suggestNotice, setSuggestNotice] = useState<string | null>(null);
+  // Flipped by a 503 and never flipped back: a missing API key is a server
+  // configuration fact, not a transient failure, so re-offering the button
+  // would only buy the admin another round trip to the same answer.
+  const [suggestOff, setSuggestOff] = useState(false);
 
   const categories = useQuery({
     queryKey: ["categories"],
@@ -26,12 +52,53 @@ const NewMessage = () => {
   });
 
   const create = useMutation({
-    mutationFn: () => messagesApi.create({ categoryId, title, text, visibility }),
+    mutationFn: () => messagesApi.create({ categoryId, title, text, visibility, urgency }),
     onSuccess: (message) => {
       // The list is the authority on what actually landed; invalidate rather
       // than splice a locally-built row into the cache.
       queryClient.invalidateQueries({ queryKey: ["messages"] });
       navigate("/messages", { state: { publishedTitle: message.title } });
+    },
+  });
+
+  /**
+   * The classifier is advisory. It fills the two fields and then gets out of
+   * the way: the admin can change the category and the urgency afterwards, and
+   * nothing here submits the form. Publishing stays a deliberate human act
+   * because the model is guessing and a wrong `visibility`-adjacent decision on
+   * a community board is not cheap to take back.
+   */
+  const classify = useMutation({
+    mutationFn: () => messagesApi.classify({ title, text }),
+    onSuccess: (result) => {
+      setSuggestion(result);
+      setSuggestNotice(null);
+      setUrgency(result.urgency);
+
+      // Only adopt the category if this client actually has it. A <select>
+      // handed a value with no matching <option> renders as "nothing picked"
+      // while `categoryId` holds a truthy id — the submit button would look
+      // enabled with no visible selection behind it. The suggestion panel still
+      // shows what the model said either way.
+      const known = (categories.data ?? []).some((c) => c._id === result.categoryId);
+      if (known) setCategoryId(result.categoryId);
+    },
+    onError: (error) => {
+      setSuggestion(null);
+      // Branch on the status, never on the server's text: the API's messages
+      // are not guaranteed to be Hebrew and rewording one on the backend would
+      // silently change what the admin reads here.
+      switch (errorStatus(error)) {
+        case 503:
+          setSuggestOff(true);
+          setSuggestNotice(null);
+          break;
+        case 429:
+          setSuggestNotice("יותר מדי בקשות להצעת קטגוריה. המתן רגע ונסה שוב.");
+          break;
+        default:
+          setSuggestNotice("לא הצלחנו להציע קטגוריה. אפשר לבחור קטגוריה ודחיפות ידנית.");
+      }
     },
   });
 
@@ -45,6 +112,25 @@ const NewMessage = () => {
   const textValid = textLength > 0 && textLength <= MESSAGE_LIMITS.textMax;
   const canSubmit =
     titleValid && textValid && categoryId.length > 0 && !categories.isError && !create.isLoading;
+
+  // Same two validity flags the submit button uses, deliberately reused rather
+  // than recomputed: with an empty or over-long title, or no body text, there
+  // is nothing for the classifier to read and the call would burn a paid
+  // request to be told so.
+  // The category list is part of this too, not just the draft. The suggestion
+  // panel states flatly that "the fields were filled from the suggestion", but
+  // the category is only adopted when this client already holds a matching
+  // option — so a click fired before the categories query resolved would set the
+  // urgency, leave the category untouched, and say otherwise. Requiring the list
+  // here makes the sentence true instead of rewording it to admit it might not
+  // be, and it also stops a billed call whose answer could only be half used.
+  const canSuggest =
+    titleValid &&
+    textValid &&
+    !classify.isLoading &&
+    !categories.isLoading &&
+    !categories.isError &&
+    (categories.data?.length ?? 0) > 0;
 
   // At the cap, not over it. Both fields carry maxLength, so the browser
   // refuses the next character outright and a "you have gone over" state can
@@ -110,21 +196,67 @@ const NewMessage = () => {
               {errorMessage(categories.error, "טעינת הקטגוריות נכשלה. לא ניתן לפרסם הודעה כרגע.")}
             </span>
           )}
-          <select
-            id="categoryId"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            disabled={categories.isLoading || categories.isError}
-            required
-          >
-            <option value="">בחר קטגוריה</option>
-            {(categories.data ?? []).map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
+          <div className="categoryRow">
+            <select
+              id="categoryId"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              disabled={categories.isLoading || categories.isError}
+              required
+            >
+              <option value="">בחר קטגוריה</option>
+              {(categories.data ?? []).map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+
+            {/* Gone entirely once the server has said 503: a button that can
+                only fail is worse than no button. Everything else on this form
+                is untouched by that — the admin picks a category as before. */}
+            {!suggestOff && (
+              <button
+                type="button"
+                className="suggestBtn"
+                onClick={() => classify.mutate()}
+                disabled={!canSuggest}
+                aria-describedby="suggestHint"
+              >
+                {classify.isLoading ? "מנתח…" : "הצע קטגוריה"}
+              </button>
+            )}
+          </div>
+
+          {suggestOff ? (
+            <span className="hint">שירות הצעת הקטגוריה אינו מוגדר בשרת הזה.</span>
+          ) : (
+            <span id="suggestHint" className="hint">
+              ממלא קטגוריה ודחיפות לפי הכותרת והתוכן. זו הצעה בלבד — אפשר לשנות אותה אחר כך.
+            </span>
+          )}
         </div>
+
+        {/* role="alert" so the result reaches a screen reader without the admin
+            having to go hunting for it — same precedent as the publish error
+            box below. The panel holds the model's reasoning, which is the only
+            thing that lets the admin judge whether to keep the suggestion. */}
+        {(suggestion || suggestNotice) && (
+          <div className="suggestion" role="alert">
+            {suggestion && (
+              <>
+                <p className="headline">
+                  הצעה: {suggestion.categoryTitle} · דחיפות {urgencyLabel(suggestion.urgency)}
+                </p>
+                <p className="reason">{suggestion.reason}</p>
+                <p className="disclaimer">
+                  השדות מולאו לפי ההצעה. ההחלטה שלך — אפשר לשנות קטגוריה ודחיפות לפני הפרסום.
+                </p>
+              </>
+            )}
+            {suggestNotice && <p className="reason">{suggestNotice}</p>}
+          </div>
+        )}
 
         <fieldset className="visibility">
           <legend>נראוּת</legend>
@@ -156,6 +288,32 @@ const NewMessage = () => {
           <span id="visibilityMembersHint" className="hint">
             רק חברי קהילה מאושרים רואים את ההודעה.
           </span>
+        </fieldset>
+
+        {/* Same fieldset/legend/aria-describedby shape as נראוּת above: three
+            mutually exclusive choices belong in a radio group, and the group
+            needs a name of its own or a screen reader reads three loose radios
+            with no idea what they are grouping. */}
+        <fieldset className="urgency">
+          <legend>דחיפות</legend>
+          {URGENCY_OPTIONS.map((option) => (
+            <div key={option.value} className="option">
+              <label className="radio">
+                <input
+                  type="radio"
+                  name="urgency"
+                  value={option.value}
+                  checked={urgency === option.value}
+                  onChange={() => setUrgency(option.value)}
+                  aria-describedby={`urgency-${option.value}-hint`}
+                />
+                {option.label}
+              </label>
+              <span id={`urgency-${option.value}-hint`} className="hint">
+                {option.hint}
+              </span>
+            </div>
+          ))}
         </fieldset>
 
         {create.isError && (

@@ -1,55 +1,107 @@
-@import "../../styles/variables.scss";
 @import "../../styles/responsive.scss";
+@import "../../styles/mixins.scss";
 
 .menu {
+  direction: rtl;
+
   .item {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: var(--space-1);
 
     .title {
-      font-size: 12px;
-      font-weight: 200;
-      color: $soft-color;
+      // A section label, not body text: small, wide-tracked, and quiet — but
+      // still --text-3, which measures 5.88:1. The old rule set font-weight 200
+      // on top of a mid grey, which is how a label ends up decorative.
+      margin-bottom: var(--space-2);
+      padding-inline: var(--space-3);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
       text-transform: uppercase;
-
-      @include lg{
-        display: none;
-      }
     }
 
     .listItem {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px;
-      border-radius: 5px;
+      gap: var(--space-3);
+      padding: 10px var(--space-3);
+      // 44px touch target, which these 38px rows were short of.
+      min-height: 44px;
+      border-radius: var(--radius-md);
+      border-inline-start: 3px solid transparent;
+      color: var(--text-2);
+      font-size: var(--fs-base);
+      font-weight: 500;
+      transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 
       &:hover {
-        background-color: $soft-bg;
+        background-color: var(--surface-2);
+        color: var(--text);
       }
 
-      .listItemTitle{
-        @include lg{
-          display: none;
-        }
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
       }
     }
+
+    // The current page. Not signalled by colour alone: the fill, the accent bar
+    // on the inline-start edge and the heavier weight all move together, and
+    // NavLink's aria-current is what a screen reader actually reads.
+    .listItem.active {
+      background-color: var(--chip-accent-bg);
+      border-inline-start-color: var(--accent-fill);
+      color: var(--chip-accent-fg); // 6.50:1 light · 7.45:1 dark
+      font-weight: 600;
+    }
+
+    .listItemTitle {
+      white-space: nowrap;
+    }
   }
-}
 
-// Wired-up menu: the active route is marked with more than a colour shift.
-.menu {
-  direction: rtl;
-
-  .listItem.active {
-    background-color: #384256;
-    border-right: 3px solid #8884d8;
+  // Below 1024px the labels used to be display:none — and since this menu has
+  // no icons, that left three empty boxes with nothing in them to click on with
+  // any idea of where they went. The labels stay; the sidebar narrows to fit
+  // them instead (see .menuContainer's `width: max-content` in global.scss).
+  @include lg {
+    .item .listItem {
+      padding: 10px var(--space-2);
+      font-size: var(--fs-sm);
+    }
   }
 
-  .listItem:focus-visible {
-    outline: 2px solid #8884d8;
-    outline-offset: -2px;
+  // The horizontal strip (see .container's md rule in global.scss). The section
+  // label stays — it is still the thing that says what these three links are —
+  // it just sits at the head of the row instead of above it.
+  @include md {
+    .item {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2);
+
+      .title {
+        margin-bottom: 0;
+        padding-inline: 0;
+      }
+
+      .listItem {
+        min-height: 40px;
+        padding: var(--space-2) var(--space-4);
+        border-inline-start: 0;
+        // The active marker moves to the block-end edge, because in a
+        // horizontal strip an inline-start bar would sit between two links and
+        // read as a divider rather than as "you are here".
+        border-bottom: 3px solid transparent;
+      }
+
+      .listItem.active {
+        border-inline-start: 0;
+        border-bottom-color: var(--accent-fill);
+      }
+    }
   }
 }

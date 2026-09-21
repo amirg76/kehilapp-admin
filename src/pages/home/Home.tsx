@@ -73,8 +73,13 @@ const Home = () => {
       ) : null}
 
       <div className="tiles">
+        {/* The "loading" class is the only thing this change adds to the
+            markup: it lets the tile pulse in place while the counts are in
+            flight, instead of the bare "…" that was the loading state. Same
+            element, same size, same copy — nothing moves when the number
+            lands. */}
         {tiles.map((tile) => (
-          <div className="tile" key={tile.label}>
+          <div className={`tile${loading ? " loading" : ""}`} key={tile.label}>
             <span className="label">{tile.label}</span>
             <span className="value">{loading ? "…" : tile.value}</span>
             <span className="hint">{loading ? "" : tile.hint}</span>

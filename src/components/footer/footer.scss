@@ -1,17 +1,33 @@
-.footer{
+@import "../../styles/responsive.scss";
+
+.footer {
+  direction: rtl;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 30px;
+  gap: var(--space-2);
+  // Side padding tracks .container's gutter and the navbar's, so the three
+  // horizontal bands of the page share one edge; the vertical padding is
+  // unchanged.
+  padding: var(--space-5) var(--space-4);
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  color: var(--text-2);
 
-  span{
-
-    &:first-child{
-      font-weight: bold;
+  span {
+    &:first-child {
+      font-weight: 600;
+      color: var(--text);
+      font-size: var(--fs-sm);
     }
-
-    &:last-child{
-      font-size: 14px;
+    &:last-child {
+      font-size: var(--fs-xs);
+      color: var(--text-3);
     }
+  }
+
+  @include sm {
+    padding: var(--space-4) var(--space-3);
   }
 }

@@ -1,23 +1,23 @@
+@import "../../styles/responsive.scss";
+@import "../../styles/mixins.scss";
+
 .users {
   direction: rtl;
 
   .info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
+    @include page-head;
+    & { justify-content: space-between; }
 
-    h1 { margin: 0; font-size: 24px; }
-    .count { color: #a1a1a1; font-size: 14px; }
+    .count {
+      color: var(--text-2);
+      font-size: var(--fs-base);
+      font-variant-numeric: tabular-nums;
+    }
   }
 
   .error {
-    padding: 10px 12px;
-    border-radius: 5px;
-    background: rgba(255, 77, 79, 0.15);
-    border: 1px solid rgba(255, 77, 79, 0.5);
-    color: #ffb3b4;
-    font-size: 14px;
+    @include error-banner;
+    margin-bottom: var(--space-4);
   }
 
   .dataTable {
@@ -28,61 +28,73 @@
     // itself never overflows the viewport width.
     max-width: 100%;
     overflow-x: auto;
+
+    @include md {
+      // A 600px grid inside a ~560px-tall phone viewport means the footer is
+      // always off screen; the grid keeps its own internal scroll either way.
+      height: 520px;
+    }
   }
 
+  // Role badge. Carries its own word, so the colour reinforces the text and is
+  // never the only signal.
   .role {
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 12px;
+    @include chip;
 
-    &.admin { background: rgba(136, 132, 216, 0.25); color: #b6b3ee; }
-    &.member { background: rgba(255, 255, 255, 0.08); color: #ccc; }
+    &.admin { background: var(--chip-accent-bg); color: var(--chip-accent-fg); }
+    &.member { background: var(--chip-neutral-bg); color: var(--chip-neutral-fg); }
   }
 
-  // Approval status badge. Same treatment as the messages table's .tier:
-  // carries its own text, so colour is reinforcement, never the only signal.
+  // Approval status badge, same treatment as the messages table's .tier.
   .tier {
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 12px;
+    @include chip;
 
-    &.approved { background: rgba(76, 217, 100, 0.18); color: #7de08f; }
-    &.pending { background: rgba(255, 193, 7, 0.18); color: #ffd45e; }
+    &.approved { background: var(--chip-success-bg); color: var(--chip-success-fg); }
+    &.pending { background: var(--chip-warn-bg); color: var(--chip-warn-fg); }
   }
 
   .rowActions {
     display: flex;
-    gap: 6px;
+    align-items: center;
+    gap: var(--space-2);
+    // Same load-bearing rule as .categoryRow and .rowActions on the messages
+    // page: a flex item defaults to min-width:auto and refuses to shrink below
+    // its content, which is exactly how this app's horizontal overflow bug
+    // happened. The column is a fixed 220px and the grid's own scroller
+    // (.dataTable) absorbs the total width.
+    min-width: 0;
     flex-wrap: wrap;
   }
 
   .actionBtn {
-    padding: 3px 10px;
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-    font-size: 12px;
-    white-space: nowrap;
-
-    &:focus-visible { outline: 2px solid #8884d8; outline-offset: 2px; }
-    &:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    // Approve / promote: affirmative actions, same purple accent used
-    // elsewhere on this page (.role.admin, .newMessageBtn on Messages).
-    &.approve,
-    &.promote {
-      border: 1px solid rgba(136, 132, 216, 0.6);
-      color: #b6b3ee;
-      &:hover { background: rgba(136, 132, 216, 0.15); }
+    @include btn-outline;
+    // 32px, not the shared 36px: two of these have to fit inside a 52px grid
+    // row next to each other without the row growing. It is under the 44px
+    // touch floor, which a data grid's per-row controls cannot meet without
+    // doubling the row height — flagged rather than silently accepted.
+    & {
+      min-height: 32px;
+      padding: 0 var(--space-3);
+      font-size: var(--fs-xs);
+      border-radius: var(--radius-sm);
     }
 
-    // Revoke / demote: taking something away — same red accent as the
-    // messages table's delete button.
+    // Approve / promote: affirmative actions, in the app's accent.
+    &.approve,
+    &.promote {
+      border-color: var(--accent);
+      color: var(--accent-text);
+      &:hover:not(:disabled) { background: var(--chip-accent-bg); }
+    }
+
+    // Revoke / demote: taking something away — the danger accent, outlined
+    // rather than filled, because the filled red is reserved for the confirm
+    // dialog's final button.
     &.revoke,
     &.demote {
-      border: 1px solid rgba(255, 77, 79, 0.6);
-      color: #ff9a9b;
-      &:hover { background: rgba(255, 77, 79, 0.15); }
+      border-color: var(--danger-border);
+      color: var(--danger-text);
+      &:hover:not(:disabled) { background: var(--chip-danger-bg); }
     }
   }
 }
