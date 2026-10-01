@@ -49,7 +49,8 @@ const Layout = () => (
   </div>
 );
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+  [
   {
     path: "/",
     // The guard wraps the whole shell, not each page: an unauthenticated visitor
@@ -72,7 +73,15 @@ const router = createBrowserRouter([
     ],
   },
   { path: "/login", element: <Login /> },
-]);
+  ],
+  {
+    // Vite's `base` (vite.config.ts), minus its trailing slash: "" when served
+    // from the root, "/admin" when the reverse proxy mounts the panel under a
+    // path. Read from the build rather than typed here, so the assets and the
+    // routes always agree on where the app lives.
+    basename: import.meta.env.BASE_URL.replace(/\/$/, ""),
+  },
+);
 
 /**
  * Provider order matters. AuthProvider sits ABOVE RouterProvider so the session

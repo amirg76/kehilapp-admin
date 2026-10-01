@@ -1,0 +1,55 @@
+name: CI
+
+# The admin panel had no CI. Its checks — a strict lint (--max-warnings 0)
+# and a build that starts with the TypeScript compiler — existed and passed on
+# one developer's machine, and a pull request could break either and still
+# merge green. This runs both on every pull request and push to main.
+#
+# There is no unit-test runner in this repo; the 83 browser probes live in
+# kehilapp-media/probes and need a running stack, so they are not run here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  floor:
+    name: "Floor: lint, build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      # Same major as the backend and the resident app.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # `eslint src --ext ts,tsx --max-warnings 0`: a single warning fails.
+      - name: Lint
+        run: npm run lint
+
+      # `tsc && vite build`: a type error fails before Vite runs. vite.config.ts
+      # refuses to build when VITE_API_BASE_URL is undefined, because the app
+      # would fall back to localhost in a production bundle; "" means same
+      # origin. VITE_BASE_PATH "/" is the default; the deployment builds with
+      # /admin/ (see kehilapp-devops/docker/admin.Dockerfile).
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ""
+          VITE_BASE_PATH: /
