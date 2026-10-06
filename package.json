@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "plain-text-check": "node scripts/plain-text-check.mjs",
-    "check": "npm run plain-text-check",
+    "no-raw-bidi": "node scripts/no-raw-bidi.mjs",
+    "check": "npm run plain-text-check && npm run no-raw-bidi",
     "preview": "vite preview"
   },
   "dependencies": {

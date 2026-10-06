@@ -43,6 +43,15 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # scripts/no-raw-bidi.mjs fails on any RAW bidi control character
+      # (U+061C, U+200E/F, U+202A-E, U+2066-9) anywhere under src/. They are
+      # invisible in a diff, and two were once pasted into a comment in
+      # src/utils/plainText.ts. This is one half of `npm run check`; the other
+      # half, plain-text-check.mjs, imports a .ts module directly and needs
+      # node's type stripping (v22.18+), which this Node 20 job does not have.
+      - name: No raw bidi controls
+        run: npm run no-raw-bidi
+
       # `tsc && vite build`: a type error fails before Vite runs. vite.config.ts
       # refuses to build when VITE_API_BASE_URL is undefined, because the app
       # would fall back to localhost in a production bundle; "" means same
