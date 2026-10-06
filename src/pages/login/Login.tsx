@@ -19,8 +19,10 @@ const loginError = (error: unknown): string => {
   if (status === 403) return "החשבון קיים אך האימייל טרם אומת. בדוק את תיבת הדואר שלך.";
   if (status === 429) return "יותר מדי ניסיונות התחברות. המתן דקה ונסה שוב.";
   if (status === 400) return "פרטי ההתחברות אינם תקינים.";
-  // No status at all means the request never reached the server.
-  if (!status) return "אין תקשורת עם השרת. ודא שהבקאנד פועל על 5001.";
+  // No status at all means the request never reached the server. Said in the
+  // admin's terms: no port numbers or process names — that is a developer's
+  // diagnosis, and the developer has the browser's network tab for it.
+  if (!status) return "לא ניתן להתחבר לשרת. נסה שוב בעוד רגע.";
   return "ההתחברות נכשלה. נסה שוב.";
 };
 
