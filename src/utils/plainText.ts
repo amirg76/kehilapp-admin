@@ -73,8 +73,10 @@ export const BIDI_CONTROL_CODE_POINTS = Object.freeze([
 ]);
 
 /**
- * The shared list as an ordinary character class, e.g. "[؜‎…]",
- * built once at module load.
+ * The shared list as an ordinary character class of U+XXXX escapes (ALM, LRM,
+ * RLM and the other nine), built once at module load. No raw control
+ * character appears anywhere in this file; scripts/no-raw-bidi.mjs fails the
+ * build if one ever does.
  *
  * Deliberately NOT /\p{Bidi_Control}/u: the resident repo's urlSafety.js
  * records why (a Unicode-property/lookbehind construct there survived into the

@@ -30,10 +30,14 @@ jobs:
         with:
           persist-credentials: false
 
-      # Same major as the backend and the resident app.
+      # 22, not the backend's 20: scripts/plain-text-check.mjs imports a .ts
+      # module directly and needs node's built-in type stripping (v22.18+).
+      # On 20 that half of `npm run check` could not run, so a pull request
+      # that dropped a code point from the bidi list would still merge green.
+      # This is a build-only app; nothing here runs on the server's Node.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Install
@@ -42,6 +46,15 @@ jobs:
       # `eslint src --ext ts,tsx --max-warnings 0`: a single warning fails.
       - name: Lint
         run: npm run lint
+
+      # Two halves. plain-text-check.mjs proves src/utils/plainText.ts still
+      # strips every bidi control character (83 cases, the real module, not a
+      # copy). no-raw-bidi.mjs fails on any RAW such character (U+061C,
+      # U+200E/F, U+202A-E, U+2066-9) in src/, scripts/, .github/ and the
+      # root text files: invisible in a diff, and two were once pasted into a
+      # comment in src/utils/plainText.ts.
+      - name: Plain-text safety + no raw bidi controls
+        run: npm run check
 
       # `tsc && vite build`: a type error fails before Vite runs. vite.config.ts
       # refuses to build when VITE_API_BASE_URL is undefined, because the app
