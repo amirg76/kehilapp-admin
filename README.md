@@ -49,7 +49,7 @@ changed, including the parts that are history now.
 - **Bidi-control hygiene.** Member- and admin-supplied text is stripped of the
   twelve Unicode bidi control characters before it reaches a grid cell
   (`src/utils/plainText.ts`), and `npm run check` fails the build if a raw one
-  is ever committed into `src/`.
+  is ever committed into `src/`, `scripts/`, `.github/` or a root text file.
 - **Strict toolchain.** TypeScript `strict`, ESLint with `--max-warnings 0`,
   and a CI workflow that runs lint, the raw-bidi check and the build on every
   push and pull request.
@@ -59,8 +59,8 @@ changed, including the parts that are history now.
 
 ## Running it
 
-Requires Node 20+ (Node 22.18+ for `npm run check`, whose `plain-text-check`
-imports a `.ts` module directly) and a running
+Requires Node 22.18+ (`npm run check` imports a `.ts` module directly; CI runs
+on 22) and a running
 [kehilapp-backend](https://github.com/amirg76/kehilapp-backend). The panel is
 a client only — nothing works without the API.
 
@@ -96,7 +96,7 @@ VITE_API_BASE_URL="" VITE_BASE_PATH=/admin/ npm run build
 |---|---|
 | `npm run dev` | Vite dev server on port 3001 |
 | `npm run lint` | ESLint over `src`, zero warnings allowed |
-| `npm run check` | `plain-text-check` (the bidi strip against node's Unicode tables) + `no-raw-bidi` (no raw bidi control character under `src/`) |
+| `npm run check` | `plain-text-check` (the bidi strip against node's Unicode tables) + `no-raw-bidi` (no raw bidi control character in `src/`, `scripts/`, `.github/` or a root text file) |
 | `npm run build` | `tsc` then `vite build` |
 
 ## Tech stack

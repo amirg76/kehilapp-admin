@@ -1,4 +1,5 @@
-// Fails when a RAW Unicode bidi control character appears anywhere under src/.
+// Fails when a RAW Unicode bidi control character appears in src/, scripts/,
+// .github/ or a root-level text file (or in the paths given on the command line).
 //
 //   npm run no-raw-bidi      (or: node scripts/no-raw-bidi.mjs [path ...])
 //
@@ -14,8 +15,8 @@
 // that the characters are written as `\uXXXX` escapes or named, never raw, and
 // this is what enforces it.
 //
-// WHAT IT SCANS. Every file under src/ (or the paths given on the command
-// line), read as UTF-8. The set is the twelve Bidi_Control code points — the
+// WHAT IT SCANS. Every text file (by extension) under the default roots, or
+// under the paths given on the command line, read as UTF-8. The set is the twelve Bidi_Control code points — the
 // same list src/utils/plainText.ts strips from member text — built here with
 // String.fromCodePoint so that this file, too, contains no raw control
 // character. Output is English on purpose: raw terminal output mangles Hebrew.
@@ -24,8 +25,8 @@
 //   path:line:col  U+XXXX NAME
 // Exit 2 = a path given on the command line does not exist.
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -54,17 +55,40 @@ const CONTROL_RE = new RegExp(
 
 const hex = (n) => `U+${n.toString(16).toUpperCase().padStart(4, "0")}`;
 
+// Text files only: an image's bytes can decode to one of these code points by
+// accident. Everything a reviewer reads as text is here; add to it, do not
+// drop the filter.
+const TEXT_EXTENSIONS = new Set([
+  ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".css", ".html", ".json",
+  ".md", ".yml", ".yaml", ".svg", ".txt",
+]);
+const isText = (path) => TEXT_EXTENSIONS.has(extname(path).toLowerCase());
+
+// lstat, not stat: a symbolic link is skipped rather than followed, so a link
+// pointing back up the tree cannot keep the CI job walking until its timeout.
 function* walk(path) {
-  const st = statSync(path);
+  const st = lstatSync(path);
+  if (st.isSymbolicLink()) return;
   if (st.isDirectory()) {
+    if (basename(path) === "node_modules") return;
     for (const name of readdirSync(path).sort()) yield* walk(join(path, name));
-  } else if (st.isFile()) {
+  } else if (st.isFile() && isText(path)) {
     yield path;
   }
 }
 
+// Default scope: everything a pull request can change that a reviewer reads as
+// text. A scan that listed only src/ let a U+202E in README.md through (gate,
+// 7.10.2026). Root files are named one by one: node_modules and dist are not
+// walked, and a root-level file is a file, not a tree.
 const roots = process.argv.slice(2);
-if (roots.length === 0) roots.push(join(REPO_ROOT, "src"));
+if (roots.length === 0) {
+  roots.push(join(REPO_ROOT, "src"), join(REPO_ROOT, "scripts"), join(REPO_ROOT, ".github"));
+  for (const name of readdirSync(REPO_ROOT).sort()) {
+    const full = join(REPO_ROOT, name);
+    if (lstatSync(full).isFile() && isText(full)) roots.push(full);
+  }
+}
 
 let filesScanned = 0;
 let hits = 0;
@@ -95,4 +119,10 @@ for (const root of roots) {
 console.log(
   `no-raw-bidi: ${filesScanned} files scanned, ${hits} raw bidi control character(s) found`
 );
+// A scan of nothing is not a clean scan: a renamed folder or a wrong root must
+// fail loudly, not pass green.
+if (filesScanned === 0) {
+  console.error("no-raw-bidi: scanned 0 files — wrong root?");
+  process.exit(2);
+}
 process.exit(hits === 0 ? 0 : 1);

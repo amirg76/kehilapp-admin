@@ -33,10 +33,10 @@ exists.
   rendered in a grid cell, a row-action label or the confirm dialog, so a name
   cannot render as a different name. `scripts/plain-text-check.mjs` checks that
   list against node's own Unicode tables and `scripts/no-raw-bidi.mjs` refuses
-  any raw control character under `src/`; both run as `npm run check` locally
-  (Node 22.18+), and the raw-bidi half runs in CI on Node 20.
+  any raw control character in `src/`, `scripts/`, `.github/` or a root text
+  file; both run as `npm run check` locally and in CI (Node 22).
 - **Lint and CI exist.** `.eslintrc.cjs` is in place and `npm run lint` runs
-  with `--max-warnings 0`. `.github/workflows/ci.yml` runs lint, `no-raw-bidi`
+  with `--max-warnings 0`. `.github/workflows/ci.yml` runs lint, `npm run check`
   and the build on every push and pull request, with actions pinned to commit
   SHAs.
 - **Accessibility and RTL.** A MUI theme in both colour modes
