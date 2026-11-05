@@ -60,7 +60,7 @@ changed, including the parts that are history now.
 ## Running it
 
 Requires Node 22.18+ (`npm run check` imports a `.ts` module directly; CI runs
-on 22) and a running
+on 24) and a running
 [kehilapp-backend](https://github.com/amirg76/kehilapp-backend). The panel is
 a client only — nothing works without the API.
 
